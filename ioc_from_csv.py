@@ -97,7 +97,7 @@ def command_to_ioc_data(command: str):
 
         record["iocs_ipv4_countries"].add(country)
     record["iocs_ipv4_countries"] = list(record["iocs_ipv4_countries"])
-    record["ioc_network_count"] = len(record["iocs_ipv4"]) + len(record["iocs_dns"])
+    record["iocs_network_count"] = len(record["iocs_ipv4"]) + len(record["iocs_dns"])
     record["sigma_matches_count"] = len(record["sigma_matches"])
     return record
 
