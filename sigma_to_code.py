@@ -125,9 +125,10 @@ for file in files:
         ast.parse(query)
         code += query
 
-        # See if is comma
+        # See if is command line only rule
         if len(fields) == 1 and 'CommandLine' in fields:
             compat_methods.append(rule_config["function_name"])
+            # @todo validate sql
             tmp_code =  sql_backend.generate(parser)
             if tmp_code:
                 sql_code += f"-- sigma rule file {rule_config['file_id']};\n"
