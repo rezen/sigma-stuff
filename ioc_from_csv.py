@@ -137,11 +137,17 @@ def get_domain_age_in_days(domain: str):
     return delta.days
 
 
+@shelve_it("ip_country.shelve")
+def get_ip_country(ip: str):
+    ip_location = GeoLiteLookup()
+    loc_result, ip_entity = ip_location.lookup_ip(ip_address=ip)
+    return loc_result.pop().get("country", {}).get("iso_code")
+
+
 @cache
 def command_to_ioc_data(command: str):
     # Cleanup invalid json bits in command
     command = _parse_cmd(command)
-    ip_location = GeoLiteLookup()
     extractor = get_ioc_extractor()
     iocs = extractor.extract(command)
     record = {
@@ -149,6 +155,7 @@ def command_to_ioc_data(command: str):
         "image": _parse_image(command),
         "command_line": command,
         "sigma_matches": get_sigmas_matches(command),
+        "iocs_count": 0,
         "iocs_ipv4": list(iocs.get("ipv4", set())),
         "iocs_dns": list(iocs.get("dns", set())),
         "iocs_ipv4_countries": set(),
@@ -165,7 +172,7 @@ def command_to_ioc_data(command: str):
     if record["iocs_dns"]:
         for dns in record["iocs_dns"]:
             if sigma_count:
-                SIGMA_HIT_IPS.add(dns)
+                SIGMA_HIT_DOMAINS.add(dns)
 
             age = get_domain_age_in_days(dns)
 
@@ -179,11 +186,10 @@ def command_to_ioc_data(command: str):
         if not ip_is_valid_and_public(ip):
             continue
 
+        country = get_ip_country(ip)
         if sigma_count:
-            SIGMA_HIT_IPS.add(ip)
+            SIGMA_HIT_IPS.add((ip, country if country else ""))
 
-        loc_result, ip_entity = ip_location.lookup_ip(ip_address=ip)
-        country = loc_result.pop().get("country", {}).get("iso_code")
         if not country:
             continue
 
@@ -212,7 +218,7 @@ df_source["cid"] = df_source["CommandLine"].apply(
 
 
 ioc_records = []
-with open("ioc_data.json", "w+") as fh:
+with open("data/ioc_data.json", "w+") as fh:
     for command in df_source["CommandLine"].tolist():
         if not command:
             continue
@@ -222,3 +228,12 @@ with open("ioc_data.json", "w+") as fh:
 
 # @todo glue in iocs data with df_source
 # df_iocs = pd.DataFrame(ioc_records)
+
+
+with open("data/sigma_hit_ips.csv", "w+") as fh:
+    for entry in SIGMA_HIT_IPS:
+        fh.write(",".join(entry) + "\n")
+
+with open("data/sigma_hit_domains.csv", "w+") as fh:
+    for entry in SIGMA_HIT_DOMAINS:
+        fh.write(entry + "\n")
