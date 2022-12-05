@@ -2,3 +2,4 @@ __pycache__
 **.pyc
 .DS_Store
 ioc_data.json
+**.db
