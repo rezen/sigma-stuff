@@ -6,6 +6,26 @@
 # docker run -d --name redis-stack-server -p 6379:6379 redis/redis-stack-server:latest
 #
 # COMMAND_COL=DETAILS ./ioc_from_csv.py  ~/Downloads/result_simple_unique.csv
+#
+# We should probably seed sqlite tables from this queries to make it easy to connect data
+
+
+# ioc_all_records (Full dataset)
+
+# sigma_matches (For each instance of a sigma rule execution against a given command)
+# cid,rule,level
+# 2e69c80ae835bbca4cddbb3888bb9dda,sigma_usage_of_web_request_commands_and_cmdlets,medium
+
+# iocs (Each individual ioc found for each command)
+# cid, type, value
+# 2e69c80ae835bbca4cddbb3888bb9dda,dns,screenshare.tech
+# 2e69c80ae835bbca4cddbb3888bb9dda,ip,8.8.8.8
+
+# ioc_facts (Additional context or facts from iocs)
+# ioc, key, value
+# screenshare.tech,age,7
+# screenshare.tech,age,7
+
 from functools import cache
 import sys
 import re
@@ -19,6 +39,7 @@ import shelve
 from functools import wraps
 
 try:
+    import click
     import whois
     import pandas as pd
     import msticpy as mp
@@ -28,7 +49,7 @@ try:
     from msticpy.transform import IoCExtract, base64unpack
     from msticpy.context.geoip import GeoLiteLookup, IPStackLookup
 except Exception as err:
-    print("pip3 install msticpy pandas whois redis requests")
+    print("pip3 install msticpy pandas whois redis requests click")
 
 try:
     import sigma_windows_proc_rules
@@ -47,8 +68,7 @@ ERROR_COUNT_WHOIS = 0
 CONFIG_SKETCHY_DOMAINS = set()
 CONFIG_SKETCHY_IPS = set()
 
-SIGMA_HIT_IPS = set()
-SIGMA_HIT_DOMAINS = set()
+IOC_FACTS = defaultdict(dict)
 
 
 _redis_client = None
@@ -59,6 +79,17 @@ def get_redis_client():
     if not _redis_client:
         _redis_client = StrictRedis()
     return _redis_client
+
+
+class JsonxEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
+def json_dumps(obj):
+    return json.dumps(obj, cls=JsonxEncoder)
 
 
 def shelve_it(file_name):
@@ -99,7 +130,7 @@ def cached(func):
         if result is None:
             # Run the function and cache the result for next time.
             value = func(*args, **kwargs)
-            value_json = json.dumps(value)
+            value_json = json_dumps(value)
             client.set(key, value_json)
         else:
             # Skip the function entirely and use the cached value instead.
@@ -109,7 +140,7 @@ def cached(func):
         return value
 
     if not client:
-        return shelve_it("shelve__" + func.__name__)
+        return shelve_it("data/shelve__" + func.__name__)
     return wrapper
 
 
@@ -146,13 +177,17 @@ def get_sigmas_matches(command: str):
     matches = []
     for method in sigma_windows_proc_rules.CLI_ONLY_COMPAT_METHODS:
         try:
-            is_match = getattr(sigma_windows_proc_rules, method)(
+            sigma_rule = getattr(sigma_windows_proc_rules, method)
+            is_match = sigma_rule(
                 {
                     "_raw": Stringy(command),
                     "COMMAND_LINE": Stringy(command),
                 }
             )
             if is_match:
+                # Include level in the string for starters
+                if hasattr(sigma_rule, "sigma_meta"):
+                    method = method + ":" + sigma_rule.sigma_meta.get("level", "_")
                 matches.append(method)
         except Exception as err:
             pass
@@ -213,13 +248,38 @@ def is_tor_exit_node(ip: str):
 
 
 @cached
+def get_msticpy_iocs(command: str):
+    extractor = get_ioc_extractor()
+    return extractor.extract(command)
+
+
+def iocs_to_list(iocs, include={}):
+    if not iocs:
+        return []
+
+    records = []
+    for ioc_type in iocs:
+        for entry in iocs[ioc_type]:
+            records.append(
+                {
+                    **{
+                        "ioc_type": ioc_type,
+                        "ioc_value": entry,
+                    },
+                    **include,
+                }
+            )
+    return []
+
+
 def command_to_ioc_data(command: str):
     # Cleanup invalid json bits in command
     command = _parse_cmd(command)
-    extractor = get_ioc_extractor()
-    iocs = extractor.extract(command)
+    cid = "" + hashlib.md5(command.encode("utf8")).hexdigest()
+    iocs = get_msticpy_iocs(command)
+
     record = {
-        "cid": hashlib.md5(command.encode("utf8")).hexdigest(),
+        "cid": cid,
         "image": _parse_image(command),
         "command_line": command,
         "sigma_matches": get_sigmas_matches(command),
@@ -231,8 +291,12 @@ def command_to_ioc_data(command: str):
         # @todo get urls
     }
     sigma_count = len(record["sigma_matches"])
+    sigmas_severe_count = len(
+        [r for r in record["sigma_matches"] if ":high" in r or ":crit" in r]
+    )
 
     record["sigma_matches_count"] = sigma_count
+    record["sigma_severe_count"] = sigmas_severe_count
 
     ti_lookup = mp.TILookup()
     # print(ti_lookup.provider_status)
@@ -242,7 +306,13 @@ def command_to_ioc_data(command: str):
         for dns in record["iocs_dns"]:
             age = get_domain_age_in_days(dns)
             if sigma_count:
-                SIGMA_HIT_DOMAINS.add((dns, str(age if age else "")))
+                IOC_FACTS[dns]["has_sigmas_matches"] = True
+
+            if sigmas_severe_count:
+                IOC_FACTS[dns]["has_sigmas_severe_matches"] = True
+
+            if age:
+                IOC_FACTS[dns]["age"] = age
 
             if age != None and age < THRESHOLD_DOMAIN_AGE:
                 DATA_FRESH_DOMAINS[dns] = age
@@ -256,17 +326,21 @@ def command_to_ioc_data(command: str):
 
         country = get_ip_country(ip)
         if sigma_count:
-            SIGMA_HIT_IPS.add((ip, country if country else ""))
+            IOC_FACTS[ip]["has_sigmas_matches"] = True
+
+        if sigmas_severe_count:
+            IOC_FACTS[ip]["has_sigmas_severe_matches"] = True
 
         if not country:
             continue
 
+        IOC_FACTS[ip]["country"] = country
         record["iocs_ipv4_countries"].add(country)
 
     record["iocs_ipv4_countries"] = list(record["iocs_ipv4_countries"])
     record["iocs_network_count"] = len(record["iocs_ipv4"]) + len(record["iocs_dns"])
     record["sigma_matches_count"] = len(record["sigma_matches"])
-    return record
+    return record, iocs_to_list(iocs, {"cid": cid})
 
 
 target_csv = sys.argv[1]
@@ -287,33 +361,49 @@ df_source["cid"] = df_source["CommandLine"].apply(
 
 ioc_records = []
 suspicious_records = []
+commands_list = df_source["CommandLine"].tolist()
 
-with open("data/ioc_records.json", "w+") as fh:
-    for command in df_source["CommandLine"].tolist():
-        if not command:
-            continue
-        data = command_to_ioc_data(command)
-        ioc_records.append(data)
-        fh.write(json.dumps(data, default=str) + "\n")
+fh_suspicious = open("data/ioc_suspicious_records.json", "w+")
+fh_iocs = open("data/iocs.csv", "w+")
+fh_iocs.write("cid,ioc_type,ioc_value\n")
 
-        if data["iocs_domains_fresh"]:
-            suspicious_records.append(data)
-        elif data["sigma_matches_count"] > 0:
-            suspicious_records.append(data)
+fh_sigma_matches = open("data/sigma_matches.csv", "w+")
+fh_iocs.write("cid,rule,level\n")
 
-with open("data/ioc_suspicious_records.json", "w+") as fh:
-    for record in suspicious_records:
-        fh.write(json.dumps(record, default=str) + "\n")
+with click.progressbar(commands_list) as entries:
+    with open("data/ioc_all_records.json", "w+") as fh:
+        for command in entries:
+            if not command:
+                continue
+
+            # @todo denote longer to process records
+            record, iocs = command_to_ioc_data(command)
+            cid = record["cid"]
+
+            # Dump robust records
+            fh.write(json_dumps(record) + "\n")
+
+            # Dump ioc records
+            for ioc in iocs:
+                fh_iocs.write(",".join([cid, ioc["ioc_type"], ioc["ioc_value"]]) + "\n")
+
+            # Dump sigma records
+            for sigma_match in record["sigma_matches"]:
+                rule, level = sigma_match.split(":")
+                fh_sigma_matches.write(",".join([cid, rule, level]) + "\n")
+
+            if record["iocs_domains_fresh"]:
+                fh_suspicious.write(json_dumps(record) + "\n")
+            elif record["sigma_matches_count"] > 0:
+                fh_suspicious.write(json_dumps(record) + "\n")
+
+    fh_suspicious.close()
+    fh_iocs.close()
+    fh_sigma_matches.close()
 
 
-# @todo glue in iocs data with df_source
-# df_iocs = pd.DataFrame(ioc_records)
-
-
-with open("data/sigma_hit_ips.csv", "w+") as fh:
-    for entry in SIGMA_HIT_IPS:
-        fh.write(",".join(entry) + "\n")
-
-with open("data/sigma_hit_domains.csv", "w+") as fh:
-    for entry in SIGMA_HIT_DOMAINS:
-        fh.write(",".join(entry) + "\n")
+with open("data/ioc_facts.csv", "w+") as fh:
+    fh.write(",".join(["ioc", "key", "value"]) + "\n")
+    for key in IOC_FACTS:
+        for fact_key in IOC_FACTS[key]:
+            fh.write(",".join([key, fact_key, str(IOC_FACTS[key][fact_key])]) + "\n")
