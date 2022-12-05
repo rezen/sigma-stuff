@@ -9,21 +9,50 @@ import re
 import json
 import os.path
 import hashlib
+from datetime import datetime
+from collections import defaultdict
+import ipaddress
+import shelve
+
 
 try:
+    import whois
     import pandas as pd
     import msticpy as mp
-
+    import msticpy.context.domain_utils as domain_utils
     from msticpy.transform import IoCExtract, base64unpack
     from msticpy.context.geoip import GeoLiteLookup, IPStackLookup
 except Exception as err:
-    print("pip3 install msticpy pandas")
+    print("pip3 install msticpy pandas whois")
 
 try:
     import sigma_windows_proc_rules
 except:
     print("You need this file to execute sigmas rules!")
     print("https://github.com/rezen/sigma-stuff/blob/main/sigma_windows_proc_rules.py")
+
+
+THRESHOLD_DOMAIN_AGE = int(os.environ.get("THRESHOLD_DOMAIN_AGE", 60))
+FRESH_DOMAINS = {}
+ERROR_COUNT_WHOIS = 0
+CONFIG_SKETCHY_DOMAINS = set()
+CONFIG_SKETCHY_IPS = set()
+SIGMA_HIT_IPS = set()
+SIGMA_HIT_DOMAINS = set()
+
+
+def shelve_it(file_name):
+    d = shelve.open(file_name)
+
+    def decorator(func):
+        def new_func(param):
+            if param not in d:
+                d[param] = func(param)
+            return d[param]
+
+        return new_func
+
+    return decorator
 
 
 class Stringy(str):
@@ -54,6 +83,7 @@ def get_ioc_extractor():
     return extractor
 
 
+@cache
 def get_sigmas_matches(command: str):
     matches = []
     for method in sigma_windows_proc_rules.CLI_ONLY_COMPAT_METHODS:
@@ -73,10 +103,45 @@ def get_sigmas_matches(command: str):
 
 
 @cache
+def ip_is_valid_and_public(ip_string):
+    try:
+        ip_data = ipaddress.ip_address(ip_string)
+        return ip_data.is_private != True
+    except ValueError:
+        return False
+
+
+@shelve_it("domain_age.shelve")
+def get_domain_age_in_days(domain: str):
+    global ERROR_COUNT_WHOIS
+    parts = domain_utils.dns_components(domain)
+    target = parts["domain"] + "." + parts["suffix"]
+    try:
+        record = whois.whois(target)
+    except Exception as err:
+        ERROR_COUNT_WHOIS += 1
+        return None
+    if not record.creation_date:
+        return None
+    created_at = record.creation_date
+    if isinstance(created_at, list):
+        created_at = created_at.pop(0)
+
+    try:
+        delta = datetime.now() - created_at
+    except:
+        print("Issue with domain")
+        print(domain)
+        print(record)
+        exit()
+    return delta.days
+
+
+@cache
 def command_to_ioc_data(command: str):
     # Cleanup invalid json bits in command
     command = _parse_cmd(command)
-    iplocation = GeoLiteLookup()
+    ip_location = GeoLiteLookup()
     extractor = get_ioc_extractor()
     iocs = extractor.extract(command)
     record = {
@@ -87,15 +152,43 @@ def command_to_ioc_data(command: str):
         "iocs_ipv4": list(iocs.get("ipv4", set())),
         "iocs_dns": list(iocs.get("dns", set())),
         "iocs_ipv4_countries": set(),
+        "iocs_domain_fresh": False,
     }
+    sigma_count = len(record["sigma_matches"])
 
+    record["sigma_matches_count"] = sigma_count
+
+    ti_lookup = mp.TILookup()
+    # print(ti_lookup.provider_status)
+
+    # Check if domain is newer, that raises suspicion
+    if record["iocs_dns"]:
+        for dns in record["iocs_dns"]:
+            if sigma_count:
+                SIGMA_HIT_IPS.add(dns)
+
+            age = get_domain_age_in_days(dns)
+
+            if age != None and age < THRESHOLD_DOMAIN_AGE:
+                FRESH_DOMAINS[dns] = age
+                record["iocs_domain_fresh"] = age
+                break
+
+    # If country of ip is different than ip of initiator, likely suspicious
     for ip in record["iocs_ipv4"]:
-        loc_result, ip_entity = iplocation.lookup_ip(ip_address=ip)
+        if not ip_is_valid_and_public(ip):
+            continue
+
+        if sigma_count:
+            SIGMA_HIT_IPS.add(ip)
+
+        loc_result, ip_entity = ip_location.lookup_ip(ip_address=ip)
         country = loc_result.pop().get("country", {}).get("iso_code")
         if not country:
             continue
 
         record["iocs_ipv4_countries"].add(country)
+
     record["iocs_ipv4_countries"] = list(record["iocs_ipv4_countries"])
     record["iocs_network_count"] = len(record["iocs_ipv4"]) + len(record["iocs_dns"])
     record["sigma_matches_count"] = len(record["sigma_matches"])
