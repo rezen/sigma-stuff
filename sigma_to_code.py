@@ -24,6 +24,10 @@ def {function_name}(record):
     logsource: {logsource}
     """
     return {query}
+
+{function_name}.sigma_meta = dict(
+    level="{level}"
+)
 '''
 
 
