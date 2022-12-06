@@ -26,9 +26,9 @@
 # screenshare.tech,age,7
 # screenshare.tech,age,7
 
-from functools import cache
 import sys
 import re
+import csv
 import json
 import os.path
 import hashlib
@@ -254,9 +254,6 @@ def get_msticpy_iocs(command: str):
 
 
 def iocs_to_list(iocs, include={}):
-    if not iocs:
-        return []
-
     records = []
     for ioc_type in iocs:
         for entry in iocs[ioc_type]:
@@ -269,12 +266,11 @@ def iocs_to_list(iocs, include={}):
                     **include,
                 }
             )
-    return []
+    return records
 
 
 def command_to_ioc_data(command: str):
     # Cleanup invalid json bits in command
-    command = _parse_cmd(command)
     cid = "" + hashlib.md5(command.encode("utf8")).hexdigest()
     iocs = get_msticpy_iocs(command)
 
@@ -349,7 +345,7 @@ if not os.path.exists(target_csv):
     exit(1)
 
 
-command_column = os.environ.get("COMMAND_COL", "DETAILS")
+command_column = os.environ.get("COMMAND_COL", "COMMAND_LINE")
 print(f" - Reading file={target_csv} col={command_column} to as columns for commands")
 
 df_source = pd.read_csv(target_csv)
@@ -361,14 +357,19 @@ df_source["cid"] = df_source["CommandLine"].apply(
 
 ioc_records = []
 suspicious_records = []
-commands_list = df_source["CommandLine"].tolist()
 
-fh_suspicious = open("data/ioc_suspicious_records.json", "w+")
+# Dedupe commands before processing them all
+commands_list = list(set(df_source["CommandLine"].tolist()))
+
+fh_suspicious = open("data/ioc_suspicious_commands.json", "w+")
+
 fh_iocs = open("data/iocs.csv", "w+")
-fh_iocs.write("cid,ioc_type,ioc_value\n")
+iocs_writer = csv.DictWriter(fh_iocs, ['cid', 'ioc_type', 'ioc_value'])
+iocs_writer.writeheader()
+
 
 fh_sigma_matches = open("data/sigma_matches.csv", "w+")
-fh_iocs.write("cid,rule,level\n")
+fh_sigma_matches.write("cid,rule,level\n")
 
 with click.progressbar(commands_list) as entries:
     with open("data/ioc_all_records.json", "w+") as fh:
@@ -385,7 +386,7 @@ with click.progressbar(commands_list) as entries:
 
             # Dump ioc records
             for ioc in iocs:
-                fh_iocs.write(",".join([cid, ioc["ioc_type"], ioc["ioc_value"]]) + "\n")
+                iocs_writer.writerow(ioc)
 
             # Dump sigma records
             for sigma_match in record["sigma_matches"]:
@@ -397,8 +398,8 @@ with click.progressbar(commands_list) as entries:
             elif record["sigma_matches_count"] > 0:
                 fh_suspicious.write(json_dumps(record) + "\n")
 
-    fh_suspicious.close()
     fh_iocs.close()
+    fh_suspicious.close()
     fh_sigma_matches.close()
 
 
