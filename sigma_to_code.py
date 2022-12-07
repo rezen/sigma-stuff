@@ -166,12 +166,12 @@ code += "CLI_ONLY_COMPAT_METHODS=" + json.dumps(list(compat_methods), indent=2)
 ast.parse(code)
 
 
-with open("sigma_windows_proc_rules.py", "w+") as fh:
+with open("sigma_cli_rules.py", "w+") as fh:
     fh.write(code)
 
 with open("__failed_sigma_code.py", "w+") as fh:
     fh.write(errored_code)
 
 
-with open("sigma_windows_proc_rules.sql", "w+") as fh:
+with open("sigma_cli_rules.sql", "w+") as fh:
     fh.write(sql_code)
