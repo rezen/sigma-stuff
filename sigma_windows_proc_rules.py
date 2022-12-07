@@ -34,7 +34,7 @@ def sigma_suspicious_offlinescannershell_exe_execution_from_another_folder(recor
     """
     file_id: rules/windows/process_creation/proc_creation_win_lolbin_offlinescannershell.yml
     title: Suspicious OfflineScannerShell.exe Execution From Another Folder
-    fields: ['Image', 'CurrentDirectory']
+    fields: ['CurrentDirectory', 'Image']
     level: medium
     description: Use OfflineScannerShell.exe to execute mpclient.dll library in the current working directory
     logsource: category:process_creation - product:windows
@@ -124,7 +124,7 @@ def sigma_uac_bypass_using_changepk_and_slui(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_uac_bypass_changepk_slui.yml
     title: UAC Bypass Using ChangePK and SLUI
-    fields: ['IntegrityLevel', 'Image', 'ParentImage']
+    fields: ['Image', 'IntegrityLevel', 'ParentImage']
     level: high
     description: Detects an UAC bypass that uses changepk.exe and slui.exe (UACMe 61)
     logsource: category:process_creation - product:windows
@@ -169,7 +169,7 @@ def sigma_application_whitelisting_bypass_via_dll_loaded_by_odbcconf_exe(record)
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_odbcconf.yml
     title: Application Whitelisting Bypass via DLL Loaded by odbcconf.exe
-    fields: ['CommandLine', 'OriginalFilename', 'Image', 'ParentImage']
+    fields: ['CommandLine', 'Image', 'OriginalFilename', 'ParentImage']
     level: medium
     description: Detects defence evasion attempt via odbcconf.exe execution to load DLL
     logsource: category:process_creation - product:windows
@@ -184,7 +184,7 @@ def sigma_suspicious_child_process_created_as_system(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_child_process_as_system_.yml
     title: Suspicious Child Process Created as System
-    fields: ['IntegrityLevel', 'CommandLine', 'Image', 'ParentUser', 'User']
+    fields: ['CommandLine', 'Image', 'IntegrityLevel', 'ParentUser', 'User']
     level: high
     description: Detection of child processes spawned with SYSTEM privileges by parents with LOCAL SERVICE or NETWORK SERVICE accounts
     logsource: category:process_creation - product:windows - definition:ParentUser field needs sysmon >= 13.30
@@ -319,7 +319,7 @@ def sigma_uac_bypass_using_ieinstal_process(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_uac_bypass_ieinstal.yml
     title: UAC Bypass Using IEInstal - Process
-    fields: ['IntegrityLevel', 'Image', 'ParentImage']
+    fields: ['Image', 'IntegrityLevel', 'ParentImage']
     level: high
     description: Detects the pattern of UAC Bypass using IEInstal.exe (UACMe 64)
     logsource: category:process_creation - product:windows
@@ -439,7 +439,7 @@ def sigma_renamed_powershell(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_renamed_powershell.yml
     title: Renamed PowerShell
-    fields: ['Image', 'Company', 'Description']
+    fields: ['Company', 'Description', 'Image']
     level: high
     description: Detects the execution of a renamed PowerShell often used by attackers or malware
     logsource: product:windows - category:process_creation
@@ -669,7 +669,7 @@ def sigma_suspicious_tscon_start_as_system(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_tscon_localsystem.yml
     title: Suspicious TSCON Start as SYSTEM
-    fields: ['User', 'Image']
+    fields: ['Image', 'User']
     level: high
     description: Detects a tscon.exe start as LOCAL SYSTEM
     logsource: category:process_creation - product:windows
@@ -699,7 +699,7 @@ def sigma_renamed_paexec(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_renamed_paexec.yml
     title: Renamed PAExec
-    fields: ['Image', 'OriginalFileName', 'Description']
+    fields: ['Description', 'Image', 'OriginalFileName']
     level: high
     description: Detects execution of renamed version of PAExec. Often used by attackers
     logsource: category:process_creation - product:windows
@@ -894,7 +894,7 @@ def sigma_suspicious_powershell_parent_process(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_powershell_parent_process.yml
     title: Suspicious PowerShell Parent Process
-    fields: ['CommandLine', 'Image', 'ParentImage', 'Product', 'Description']
+    fields: ['CommandLine', 'Description', 'Image', 'ParentImage', 'Product']
     level: high
     description: Detects a suspicious parents of powershell.exe
     logsource: category:process_creation - product:windows
@@ -1682,7 +1682,7 @@ def sigma_false_sysinternals_suite_tools(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_false_sysinternalsuite.yml
     title: False Sysinternals Suite Tools
-    fields: ['Image', 'Company']
+    fields: ['Company', 'Image']
     level: medium
     description: Rename as a legitimate Sysinternals Suite tool to evade detection
     logsource: category:process_creation - product:windows
@@ -1714,7 +1714,7 @@ def sigma_renamed_psexec(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_renamed_psexec.yml
     title: Renamed PsExec
-    fields: ['Image', 'Product', 'Description']
+    fields: ['Description', 'Image', 'Product']
     level: high
     description: Detects the execution of a renamed PsExec often used by attackers or malware
     logsource: product:windows - category:process_creation
@@ -1837,7 +1837,7 @@ def sigma_rubeus_hack_tool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_hack_rubeus.yml
     title: Rubeus Hack Tool
-    fields: ['CommandLine', 'Image', 'OriginalFileName', 'Description']
+    fields: ['CommandLine', 'Description', 'Image', 'OriginalFileName']
     level: critical
     description: Detects the execution of the hacktool Rubeus via PE information of command line parameters
     logsource: category:process_creation - product:windows
@@ -1852,7 +1852,7 @@ def sigma_possible_installerfiletakeover_lpe_cve_2021_41379(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_exploit_lpe_cve_2021_41379.yml
     title: Possible InstallerFileTakeOver LPE CVE-2021-41379
-    fields: ['IntegrityLevel', 'Image', 'ParentImage']
+    fields: ['Image', 'IntegrityLevel', 'ParentImage']
     level: critical
     description: Detects signs of the exploitation of LPE CVE-2021-41379 to spawn a cmd.exe with LOCAL_SYSTEM rights
     logsource: category:process_creation - product:windows
@@ -1914,7 +1914,7 @@ def sigma_use_of_anydesk_remote_access_software_from_suspicious_folder(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_anydesk_susp_folder.yml
     title: Use of Anydesk Remote Access Software from Suspicious Folder
-    fields: ['Image', 'Product', 'Company', 'Description']
+    fields: ['Company', 'Description', 'Image', 'Product']
     level: high
     description: An adversary may use legitimate desktop support and remote access software, such as Team Viewer, Go2Assist, LogMein, AmmyyAdmin, etc, to establish an interactive command and control channel to target systems within networks.
 These services are commonly used as legitimate technical support software, and may be allowed by application control within a target environment.
@@ -1932,7 +1932,7 @@ def sigma_renamed_jusched_exe(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_renamed_jusched.yml
     title: Renamed jusched.exe
-    fields: ['Image', 'Description']
+    fields: ['Description', 'Image']
     level: high
     description: Detects renamed jusched.exe used by cobalt group
     logsource: category:process_creation - product:windows
@@ -2082,7 +2082,7 @@ def sigma_possible_spn_enumeration(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_spn_enum.yml
     title: Possible SPN Enumeration
-    fields: ['CommandLine', 'Image', 'Description']
+    fields: ['CommandLine', 'Description', 'Image']
     level: medium
     description: Detects Service Principal Name Enumeration used for Kerberoasting
     logsource: category:process_creation - product:windows
@@ -2417,7 +2417,7 @@ def sigma_seatbelt_pua_tool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_pua_seatbelt.yml
     title: Seatbelt PUA Tool
-    fields: ['CommandLine', 'Image', 'OriginalFileName', 'Description']
+    fields: ['CommandLine', 'Description', 'Image', 'OriginalFileName']
     level: high
     description: Detects the execution of the PUA/Recon tool Seatbelt via PE information of command line parameters
     logsource: category:process_creation - product:windows
@@ -2432,7 +2432,7 @@ def sigma_renamed_adfind_detection(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_renamed_adfind.yml
     title: Renamed AdFind Detection
-    fields: ['CommandLine', 'Image', 'Hashes', 'OriginalFileName', 'Imphash']
+    fields: ['CommandLine', 'Hashes', 'Image', 'Imphash', 'OriginalFileName']
     level: high
     description: Detects the use of a renamed Adfind.exe. AdFind continues to be seen across majority of breaches. It is used to domain trust discovery to plan out subsequent steps in the attack chain.
     logsource: category:process_creation - product:windows
@@ -2447,7 +2447,7 @@ def sigma_iox_tunneling_tool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_iox.yml
     title: IOX Tunneling Tool
-    fields: ['CommandLine', 'Image', 'md5', 'Hashes', 'sha1', 'sha256']
+    fields: ['CommandLine', 'Hashes', 'Image', 'md5', 'sha1', 'sha256']
     level: high
     description: Detects the use of IOX - a tool for port forwarding and intranet proxy purposes
     logsource: category:process_creation - product:windows
@@ -2507,7 +2507,7 @@ def sigma_use_of_logmein_remote_access_software(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_logmein.yml
     title: Use of LogMeIn Remote Access Software
-    fields: ['Product', 'Company', 'Description']
+    fields: ['Company', 'Description', 'Product']
     level: medium
     description: An adversary may use legitimate desktop support and remote access software, such as Team Viewer, Go2Assist, LogMein, AmmyyAdmin, etc, to establish an interactive command and control channel to target systems within networks.
 These services are commonly used as legitimate technical support software, and may be allowed by application control within a target environment.
@@ -2870,7 +2870,7 @@ def sigma_always_install_elevated_windows_installer(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_always_install_elevated_windows_installer.yml
     title: Always Install Elevated Windows Installer
-    fields: ['IntegrityLevel', 'CommandLine', 'Image', 'ParentImage', 'User', 'ParentCommandLine']
+    fields: ['CommandLine', 'Image', 'IntegrityLevel', 'ParentCommandLine', 'ParentImage', 'User']
     level: medium
     description: Detects Windows Installer service (msiexec.exe) trying to install MSI packages with SYSTEM privilege
     logsource: product:windows - category:process_creation
@@ -3005,7 +3005,7 @@ def sigma_use_of_pdq_deploy_remote_adminstartion_tool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_pdq_deploy.yml
     title: Use of PDQ Deploy Remote Adminstartion Tool
-    fields: ['OriginalFileName', 'Product', 'Company', 'Description']
+    fields: ['Company', 'Description', 'OriginalFileName', 'Product']
     level: medium
     description: Detect use of PDQ Deploy remote admin tool
     logsource: category:process_creation - product:windows
@@ -3125,7 +3125,7 @@ def sigma_exploiting_cve_2019_1388(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_exploit_cve_2019_1388.yml
     title: Exploiting CVE-2019-1388
-    fields: ['CommandLine', 'IntegrityLevel', 'Image', 'ParentImage', 'User']
+    fields: ['CommandLine', 'Image', 'IntegrityLevel', 'ParentImage', 'User']
     level: critical
     description: Detects an exploitation attempt in which the UAC consent dialogue is used to invoke an Internet Explorer process running as LOCAL_SYSTEM
     logsource: category:process_creation - product:windows
@@ -3308,7 +3308,7 @@ def sigma_7zip_compressing_dump_files(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_7zip_dmp.yml
     title: 7Zip Compressing Dump Files
-    fields: ['CommandLine', 'Image', 'Description']
+    fields: ['CommandLine', 'Description', 'Image']
     level: high
     description: Detects a suspicious 7zip execution that involves a file with a .dmp extension, which could be a step in a process of dump file exfiltration
     logsource: category:process_creation - product:windows
@@ -3445,7 +3445,7 @@ def sigma_uac_bypass_using_consent_and_comctl32_process(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_uac_bypass_consent_comctl32.yml
     title: UAC Bypass Using Consent and Comctl32 - Process
-    fields: ['IntegrityLevel', 'Image', 'ParentImage']
+    fields: ['Image', 'IntegrityLevel', 'ParentImage']
     level: high
     description: Detects the pattern of UAC Bypass using consent.exe and comctl32.dll (UACMe 22)
     logsource: category:process_creation - product:windows
@@ -3535,7 +3535,7 @@ def sigma_mouse_lock_credential_gathering(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_mouse_lock.yml
     title: Mouse Lock Credential Gathering
-    fields: ['CommandLine', 'Product', 'Company']
+    fields: ['CommandLine', 'Company', 'Product']
     level: medium
     description: In Kaspersky's 2020 Incident Response Analyst Report they listed legitimate tool "Mouse Lock" as being used for both credential access and collection in security incidents.
     logsource: product:windows - category:process_creation
@@ -3657,7 +3657,7 @@ def sigma_suspicious_system_user_process_creation(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_system_user_anomaly.yml
     title: Suspicious SYSTEM User Process Creation
-    fields: ['IntegrityLevel', 'CommandLine', 'Image', 'ParentImage', 'User', 'ParentCommandLine']
+    fields: ['CommandLine', 'Image', 'IntegrityLevel', 'ParentCommandLine', 'ParentImage', 'User']
     level: high
     description: Detects a suspicious process creation as SYSTEM user (suspicious program or command line parameter)
     logsource: category:process_creation - product:windows
@@ -4662,7 +4662,7 @@ def sigma_mpiexec_lolbin(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_mpiexec_lolbin.yml
     title: MpiExec Lolbin
-    fields: ['CommandLine', 'Image', 'Hashes', 'Imphash']
+    fields: ['CommandLine', 'Hashes', 'Image', 'Imphash']
     level: high
     description: Detects a certain command line flag combination used by mpiexec.exe LOLBIN from HPC pack that can be used to execute any other binary
     logsource: category:process_creation - product:windows
@@ -4677,7 +4677,7 @@ def sigma_winrar_execution_in_non_standard_folder(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_winrar_execution.yml
     title: Winrar Execution in Non-Standard Folder
-    fields: ['Image', 'Description']
+    fields: ['Description', 'Image']
     level: high
     description: Detects a suspicious winrar execution in a folder which is not the default installation folder
     logsource: category:process_creation - product:windows
@@ -4707,7 +4707,7 @@ def sigma_csexec_remote_execution_tool_usage(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_csexec.yml
     title: CsExec Remote Execution Tool Usage
-    fields: ['Image', 'Description']
+    fields: ['Description', 'Image']
     level: high
     description: Detects the use of the lesser known remote execution tool named CsExec (a PsExec alternative)
     logsource: category:process_creation - product:windows
@@ -4842,7 +4842,7 @@ def sigma_launch_webbrowserpassview_executable(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_webbrowserpassview.yml
     title: Launch WebBrowserPassView Executable
-    fields: ['Image', 'Description']
+    fields: ['Description', 'Image']
     level: medium
     description: Detect use of WebBrowserPassView.exe
     logsource: category:process_creation - product:windows
@@ -4902,7 +4902,7 @@ def sigma_wmiprvse_spawning_process(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_wmiprvse_spawning_process.yml
     title: Wmiprvse Spawning Process
-    fields: ['LogonId', 'User', 'Image', 'ParentImage']
+    fields: ['Image', 'LogonId', 'ParentImage', 'User']
     level: high
     description: Detects wmiprvse spawning processes
     logsource: category:process_creation - product:windows
@@ -4932,7 +4932,7 @@ def sigma_defendercheck_usage(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_pua_defendercheck.yml
     title: DefenderCheck Usage
-    fields: ['Image', 'Description']
+    fields: ['Description', 'Image']
     level: high
     description: Detects the use of DefenderCheck, a tool to evaluate the signatures used in Microsoft Defender. It can be used to figure out the strings / byte chains used in Microsoft Defender to detect a tool and thus used for AV evasion.
     logsource: category:process_creation - product:windows
@@ -5007,7 +5007,7 @@ def sigma_use_short_name_path_in_image(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_ntfs_short_name_path_use_image.yml
     title: Use Short Name Path in Image
-    fields: ['Image', 'Company', 'ParentImage', 'Product', 'Description']
+    fields: ['Company', 'Description', 'Image', 'ParentImage', 'Product']
     level: high
     description: Detect use of the Windows 8.3 short name. Which could be used as a method to avoid Image detection
     logsource: category:process_creation - product:windows
@@ -5172,7 +5172,7 @@ def sigma_process_hacker_system_informer_usage(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_process_hacker.yml
     title: Process Hacker / System Informer Usage
-    fields: ['Image', 'md5', 'imphash', 'Hashes', 'OriginalFileName', 'Product', 'Description', 'sha1', 'sha256']
+    fields: ['Description', 'Hashes', 'Image', 'OriginalFileName', 'Product', 'imphash', 'md5', 'sha1', 'sha256']
     level: high
     description: Detects suspicious use of Process Hacker and its newer version named System Informer, a tool to view and manipulate processes, kernel options and other low level stuff
     logsource: category:process_creation - product:windows
@@ -5292,7 +5292,7 @@ def sigma_nimgrab_file_download(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_nimgrab.yml
     title: Nimgrab File Download
-    fields: ['Image', 'sha256', 'md5', 'Hashes', 'imphash']
+    fields: ['Hashes', 'Image', 'imphash', 'md5', 'sha256']
     level: high
     description: Detects usage of nimgrab, a tool bundled with the Nim programming framework, downloading a file. This can be normal behaviour on developer systems.
     logsource: category:process_creation - product:windows
@@ -5352,7 +5352,7 @@ def sigma_chcp_codepage_locale_lookup(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_codepage_lookup.yml
     title: CHCP CodePage Locale Lookup
-    fields: ['CommandLine', 'Image', 'GrandparentCommandLine', 'ParentImage', 'ParentCommandLine']
+    fields: ['CommandLine', 'GrandparentCommandLine', 'Image', 'ParentCommandLine', 'ParentImage']
     level: high
     description: Detects use of chcp to look up the system locale value as part of host discovery
     logsource: category:process_creation - product:windows
@@ -5427,7 +5427,7 @@ def sigma_ppid_spoofing_tool_usage(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_selectmyparent.yml
     title: PPID Spoofing Tool Usage
-    fields: ['CommandLine', 'Image', 'OriginalFileName', 'Hashes', 'Description', 'Imphash']
+    fields: ['CommandLine', 'Description', 'Hashes', 'Image', 'Imphash', 'OriginalFileName']
     level: high
     description: Detects the use of parent process ID spoofing tools like Didier Stevens tool SelectMyParent
     logsource: category:process_creation - product:windows
@@ -5490,7 +5490,7 @@ def sigma_accesschk_usage_to_check_privileges(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_accesschk_usage_after_priv_escalation.yml
     title: Accesschk Usage To Check Privileges
-    fields: ['CommandLine', 'Image', 'OriginalFileName', 'Product', 'Description']
+    fields: ['CommandLine', 'Description', 'Image', 'OriginalFileName', 'Product']
     level: medium
     description: Accesschk is an access and privilege audit tool developed by SysInternal and often being used by attacker to verify privileges
     logsource: product:windows - category:process_creation
@@ -5655,7 +5655,7 @@ def sigma_hiding_files_with_attrib_exe(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_attrib_hiding_files.yml
     title: Hiding Files with Attrib.exe
-    fields: ['CommandLine', 'Image', 'ParentImage', 'OriginalFileName', 'ParentCommandLine']
+    fields: ['CommandLine', 'Image', 'OriginalFileName', 'ParentCommandLine', 'ParentImage']
     level: low
     description: Detects usage of attrib.exe to hide files from users.
     logsource: category:process_creation - product:windows
@@ -5865,7 +5865,7 @@ def sigma_windows_credential_editor(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_hack_wce.yml
     title: Windows Credential Editor
-    fields: ['CommandLine', 'Image', 'ParentImage', 'Hashes', 'Imphash']
+    fields: ['CommandLine', 'Hashes', 'Image', 'Imphash', 'ParentImage']
     level: critical
     description: Detects the use of Windows Credential Editor (WCE)
     logsource: category:process_creation - product:windows
@@ -5910,7 +5910,7 @@ def sigma_use_of_anydesk_remote_access_software(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_anydesk.yml
     title: Use of Anydesk Remote Access Software
-    fields: ['Product', 'Company', 'Description']
+    fields: ['Company', 'Description', 'Product']
     level: medium
     description: An adversary may use legitimate desktop support and remote access software, such as Team Viewer, Go2Assist, LogMein, AmmyyAdmin, etc, to establish an interactive command and control channel to target systems within networks.
 These services are commonly used as legitimate technical support software, and may be allowed by application control within a target environment.
@@ -5943,7 +5943,7 @@ def sigma_inveigh_hack_tool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_hack_inveigh.yml
     title: Inveigh Hack Tool
-    fields: ['CommandLine', 'Image', 'OriginalFileName', 'Description']
+    fields: ['CommandLine', 'Description', 'Image', 'OriginalFileName']
     level: critical
     description: Detects the use of Inveigh a cross-platform .NET IPv4/IPv6 machine-in-the-middle tool
     logsource: category:process_creation - product:windows
@@ -6033,7 +6033,7 @@ def sigma_taskmgr_as_local_system(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_taskmgr_localsystem.yml
     title: Taskmgr as LOCAL_SYSTEM
-    fields: ['User', 'Image']
+    fields: ['Image', 'User']
     level: high
     description: Detects the creation of taskmgr.exe process in context of LOCAL_SYSTEM
     logsource: category:process_creation - product:windows
@@ -6108,7 +6108,7 @@ def sigma_run_once_task_execution_as_configured_in_registry(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_runonce_execution.yml
     title: Run Once Task Execution as Configured in Registry
-    fields: ['CommandLine', 'Image', 'Description']
+    fields: ['CommandLine', 'Description', 'Image']
     level: low
     description: This rule detects the execution of Run Once task as configured in the registry
     logsource: product:windows - category:process_creation
@@ -6123,7 +6123,7 @@ def sigma_too_long_powershell_commandlines(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_long_powershell_commandline.yml
     title: Too Long PowerShell Commandlines
-    fields: ['CommandLine', 'Product', 'Description']
+    fields: ['CommandLine', 'Description', 'Product']
     level: low
     description: Detects Too long PowerShell command lines
     logsource: category:process_creation - product:windows
@@ -6153,7 +6153,7 @@ def sigma_possible_privilege_escalation_via_weak_service_permissions(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_using_sc_to_change_sevice_image_path_by_non_admin.yml
     title: Possible Privilege Escalation via Weak Service Permissions
-    fields: ['IntegrityLevel', 'Image', 'CommandLine']
+    fields: ['CommandLine', 'Image', 'IntegrityLevel']
     level: high
     description: Detection of sc.exe utility spawning by user with Medium integrity level to change service ImagePath or FailureCommand
     logsource: category:process_creation - product:windows
@@ -6228,7 +6228,7 @@ def sigma_use_of_gotoassist_remote_access_software(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_gotoopener.yml
     title: Use of GoToAssist Remote Access Software
-    fields: ['Product', 'Company', 'Description']
+    fields: ['Company', 'Description', 'Product']
     level: medium
     description: An adversary may use legitimate desktop support and remote access software, such as Team Viewer, Go2Assist, LogMein, AmmyyAdmin, etc, to establish an interactive command and control channel to target systems within networks.
 These services are commonly used as legitimate technical support software, and may be allowed by application control within a target environment.
@@ -6321,7 +6321,7 @@ def sigma_run_whoami_as_privileged_user(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_whoami_as_priv_user.yml
     title: Run Whoami as Privileged User
-    fields: ['User', 'Image', 'OriginalFileName']
+    fields: ['Image', 'OriginalFileName', 'User']
     level: high
     description: Detects a whoami.exe executed by privileged accounts that are often misused by threat actors
     logsource: category:process_creation - product:windows
@@ -6351,7 +6351,7 @@ def sigma_stop_windows_service(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_service_stop.yml
     title: Stop Windows Service
-    fields: ['CommandLine', 'User', 'Image', 'OriginalFileName']
+    fields: ['CommandLine', 'Image', 'OriginalFileName', 'User']
     level: low
     description: Detects a windows service to be stopped
     logsource: category:process_creation - product:windows
@@ -6474,7 +6474,7 @@ def sigma_pchunter_usage(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_pchunter.yml
     title: PCHunter Usage
-    fields: ['Image', 'md5', 'imphash', 'Hashes', 'OriginalFileName', 'Description', 'sha1', 'sha256']
+    fields: ['Description', 'Hashes', 'Image', 'OriginalFileName', 'imphash', 'md5', 'sha1', 'sha256']
     level: high
     description: Detects suspicious use of PCHunter, a tool like Process Hacker to view and manipulate processes, kernel options and other low level stuff
     logsource: category:process_creation - product:windows
@@ -6678,7 +6678,7 @@ def sigma_empire_monkey(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_apt_empiremonkey.yml
     title: Empire Monkey
-    fields: ['CommandLine', 'Image', 'Description']
+    fields: ['CommandLine', 'Description', 'Image']
     level: critical
     description: Detects EmpireMonkey APT reported Activity
     logsource: category:process_creation - product:windows
@@ -6890,7 +6890,7 @@ def sigma_gmer_rootkit_detector_and_remover_execution(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_gmer_execution.yml
     title: GMER - Rootkit Detector and Remover Execution
-    fields: ['Image', 'Hashes', 'SHA1', 'SHA256', 'MD5']
+    fields: ['Hashes', 'Image', 'MD5', 'SHA1', 'SHA256']
     level: high
     description: Detects the execution GMER tool based on image and hash fields.
     logsource: category:process_creation - product:windows
@@ -6967,7 +6967,7 @@ def sigma_squiblytwo_execution(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_bypass_squiblytwo.yml
     title: SquiblyTwo Execution
-    fields: ['CommandLine', 'Image', 'Hashes', 'OriginalFileName', 'Imphash']
+    fields: ['CommandLine', 'Hashes', 'Image', 'Imphash', 'OriginalFileName']
     level: medium
     description: Detects WMI SquiblyTwo Attack with possible renamed WMI by looking for imphash
     logsource: category:process_creation - product:windows
@@ -7012,7 +7012,7 @@ def sigma_uac_bypass_using_pkgmgr_and_dism(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_uac_bypass_pkgmgr_dism.yml
     title: UAC Bypass Using PkgMgr and DISM
-    fields: ['IntegrityLevel', 'Image', 'ParentImage']
+    fields: ['Image', 'IntegrityLevel', 'ParentImage']
     level: high
     description: Detects the pattern of UAC Bypass using pkgmgr.exe and dism.exe (UACMe 23)
     logsource: category:process_creation - product:windows
@@ -7282,7 +7282,7 @@ def sigma_suspicious_file_characteristics_due_to_missing_fields(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_file_characteristics.yml
     title: Suspicious File Characteristics Due to Missing Fields
-    fields: ['Image', 'FileVersion', 'Company', 'Product', 'Description']
+    fields: ['Company', 'Description', 'FileVersion', 'Image', 'Product']
     level: medium
     description: Detects Executables in the Downloads folder without FileVersion,Description,Product,Company likely created with py2exe
     logsource: product:windows - category:process_creation
@@ -7297,7 +7297,7 @@ def sigma_conhost_parent_process_executions(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_conhost.yml
     title: Conhost Parent Process Executions
-    fields: ['CommandLine', 'Image', 'ParentImage', 'Provider_Name', 'ParentCommandLine']
+    fields: ['CommandLine', 'Image', 'ParentCommandLine', 'ParentImage', 'Provider_Name']
     level: medium
     description: Detects the conhost execution as parent process. Can be used to evaded defense mechanism.
     logsource: category:process_creation - product:windows
@@ -7447,7 +7447,7 @@ def sigma_uac_bypass_via_icmluautil(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_uac_bypass_icmluautil.yml
     title: UAC Bypass via ICMLuaUtil
-    fields: ['Image', 'ParentCommandLine', 'OriginalFileName', 'ParentImage']
+    fields: ['Image', 'OriginalFileName', 'ParentCommandLine', 'ParentImage']
     level: high
     description: Detects the pattern of UAC Bypass using ICMLuaUtil Elevated COM interface
     logsource: category:process_creation - product:windows
@@ -7584,7 +7584,7 @@ def sigma_suspicious_csi_exe_usage(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_csi.yml
     title: Suspicious Csi.exe Usage
-    fields: ['Image', 'OriginalFileName', 'Company']
+    fields: ['Company', 'Image', 'OriginalFileName']
     level: medium
     description: Csi.exe is a signed binary from Microsoft that comes with Visual Studio and provides C# interactive capabilities. It can be used to run C# code from a file passed as a parameter in command line. Early version of this utility provided with Microsoft “Roslyn” Community Technology Preview was named 'rcsi.exe'
     logsource: category:process_creation - product:windows
@@ -7659,7 +7659,7 @@ def sigma_advanced_port_scanner(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_advanced_port_scanner.yml
     title: Advanced Port Scanner
-    fields: ['CommandLine', 'Image', 'OriginalFileName', 'Description']
+    fields: ['CommandLine', 'Description', 'Image', 'OriginalFileName']
     level: medium
     description: Detects the use of Advanced Port Scanner.
     logsource: category:process_creation - product:windows
@@ -7794,7 +7794,7 @@ def sigma_microsoft_iis_service_account_password_dumped(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_iis_service_account_password_dumped.yml
     title: Microsoft IIS Service Account Password Dumped
-    fields: ['CommandLine', 'OriginalFilename', 'Image']
+    fields: ['CommandLine', 'Image', 'OriginalFilename']
     level: high
     description: Detects the Internet Information Services (IIS) command-line tool, AppCmd, being used to list passwords
     logsource: category:process_creation - product:windows
@@ -7869,7 +7869,7 @@ def sigma_microsoft_iis_connection_strings_decryption(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_iis_connection_strings_decryption.yml
     title: Microsoft IIS Connection Strings Decryption
-    fields: ['CommandLine', 'OriginalFilename', 'Image']
+    fields: ['CommandLine', 'Image', 'OriginalFilename']
     level: high
     description: Detects use of aspnet_regiis to decrypt Microsoft IIS connection strings. An attacker with Microsoft IIS web server access via a webshell or alike can decrypt and dump any hardcoded connection strings, such as the MSSQL service account password using aspnet_regiis command.
     logsource: category:process_creation - product:windows
@@ -7899,7 +7899,7 @@ def sigma_createminidump_hacktool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_hktl_createminidump.yml
     title: CreateMiniDump Hacktool
-    fields: ['Image', 'Hashes', 'Imphash']
+    fields: ['Hashes', 'Image', 'Imphash']
     level: high
     description: Detects the use of CreateMiniDump hack tool used to dump the LSASS process memory for credential extraction on the attacker's machine
     logsource: category:process_creation - product:windows
@@ -8172,7 +8172,7 @@ def sigma_use_of_ultravnc_remote_access_software(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_ultravnc.yml
     title: Use of UltraVNC Remote Access Software
-    fields: ['OriginalFileName', 'Product', 'Company', 'Description']
+    fields: ['Company', 'Description', 'OriginalFileName', 'Product']
     level: medium
     description: An adversary may use legitimate desktop support and remote access software,to establish an interactive command and control channel to target systems within networks
     logsource: category:process_creation - product:windows
@@ -8217,7 +8217,7 @@ def sigma_uac_bypass_tools_using_computerdefaults(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_tools_uac_bypass_computerdefaults.yml
     title: UAC Bypass Tools Using ComputerDefaults
-    fields: ['IntegrityLevel', 'Image', 'ParentImage']
+    fields: ['Image', 'IntegrityLevel', 'ParentImage']
     level: high
     description: Detects tools such as UACMe used to bypass UAC with computerdefaults.exe (UACMe 59)
     logsource: category:process_creation - product:windows
@@ -8415,7 +8415,7 @@ def sigma_detection_of_powershell_execution_via_dll(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_powershell_dll_execution.yml
     title: Detection of PowerShell Execution via DLL
-    fields: ['CommandLine', 'Image', 'Description']
+    fields: ['CommandLine', 'Description', 'Image']
     level: high
     description: Detects PowerShell Strings applied to rundll as seen in PowerShdll.dll
     logsource: category:process_creation - product:windows
@@ -8505,7 +8505,7 @@ def sigma_bloodhound_and_sharphound_hack_tool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_hack_bloodhound.yml
     title: Bloodhound and Sharphound Hack Tool
-    fields: ['CommandLine', 'Image', 'Company', 'Product', 'Description']
+    fields: ['CommandLine', 'Company', 'Description', 'Image', 'Product']
     level: high
     description: Detects command line parameters used by Bloodhound and Sharphound hack tools
     logsource: category:process_creation - product:windows
@@ -8550,7 +8550,7 @@ def sigma_safetykatz_hack_tool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_hack_safetykatz.yml
     title: SafetyKatz Hack Tool
-    fields: ['Image', 'OriginalFileName', 'Description']
+    fields: ['Description', 'Image', 'OriginalFileName']
     level: critical
     description: Detects the execution of the hacktool SafetyKatz via PE information and default Image name
     logsource: category:process_creation - product:windows
@@ -8610,7 +8610,7 @@ def sigma_advanced_ip_scanner(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_advanced_ip_scanner.yml
     title: Advanced IP Scanner
-    fields: ['CommandLine', 'Image', 'OriginalFileName', 'Description']
+    fields: ['CommandLine', 'Description', 'Image', 'OriginalFileName']
     level: medium
     description: Detects the use of Advanced IP Scanner. Seems to be a popular tool for ransomware groups.
     logsource: category:process_creation - product:windows
@@ -8842,7 +8842,7 @@ def sigma_3proxy_usage(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_3proxy_usage.yml
     title: 3Proxy Usage
-    fields: ['CommandLine', 'Image', 'Description']
+    fields: ['CommandLine', 'Description', 'Image']
     level: high
     description: Detects the use of 3proxy, a tiny free proxy server
     logsource: category:process_creation - product:windows
@@ -8934,7 +8934,7 @@ def sigma_uac_bypass_using_ntfs_reparse_point_process(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_uac_bypass_ntfs_reparse_point.yml
     title: UAC Bypass Using NTFS Reparse Point - Process
-    fields: ['CommandLine', 'IntegrityLevel', 'ParentCommandLine', 'Image']
+    fields: ['CommandLine', 'Image', 'IntegrityLevel', 'ParentCommandLine']
     level: high
     description: Detects the pattern of UAC Bypass using NTFS reparse point and wusa.exe DLL hijacking (UACMe 36)
     logsource: category:process_creation - product:windows
@@ -8979,7 +8979,7 @@ def sigma_use_of_screenconnect_remote_access_software(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_screenconnect.yml
     title: Use of ScreenConnect Remote Access Software
-    fields: ['Product', 'Company', 'Description']
+    fields: ['Company', 'Description', 'Product']
     level: medium
     description: An adversary may use legitimate desktop support and remote access software, such as Team Viewer, Go2Assist, LogMein, AmmyyAdmin, etc, to establish an interactive command and control channel to target systems within networks.
 These services are commonly used as legitimate technical support software, and may be allowed by application control within a target environment.
@@ -8997,7 +8997,7 @@ def sigma_sharpevtmute_evtmutehook_load(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_sysmon_disable_sharpevtmute.yml
     title: SharpEvtMute EvtMuteHook Load
-    fields: ['CommandLine', 'Image', 'Description']
+    fields: ['CommandLine', 'Description', 'Image']
     level: high
     description: Detects the use of SharpEvtHook, a tool to tamper with Windows event logs
     logsource: product:windows - category:process_creation
@@ -9074,7 +9074,7 @@ def sigma_use_radmin_viewer_utility(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_radmin.yml
     title: Use Radmin Viewer Utility
-    fields: ['OriginalFileName', 'Product', 'Description']
+    fields: ['Description', 'OriginalFileName', 'Product']
     level: high
     description: An adversary may use Radmin Viewer Utility to remotely control Windows device
     logsource: category:process_creation - product:windows
@@ -9284,7 +9284,7 @@ def sigma_uac_bypass_tool_uacme_akagi(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_hktl_uacme_uac_bypass.yml
     title: UAC Bypass Tool UACMe Akagi
-    fields: ['Image', 'Company', 'OriginalFileName', 'Product', 'Hashes', 'Description', 'Imphash']
+    fields: ['Company', 'Description', 'Hashes', 'Image', 'Imphash', 'OriginalFileName', 'Product']
     level: high
     description: Detects execution of UACMe (a tool used for UAC bypass) via default PE metadata
     logsource: category:process_creation - product:windows
@@ -9344,7 +9344,7 @@ def sigma_windows_shell_spawning_suspicious_program(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_shell_spawn_susp_program.yml
     title: Windows Shell Spawning Suspicious Program
-    fields: ['CommandLine', 'Image', 'ParentImage', 'CurrentDirectory', 'ParentCommandLine']
+    fields: ['CommandLine', 'CurrentDirectory', 'Image', 'ParentCommandLine', 'ParentImage']
     level: high
     description: Detects a suspicious child process of a Windows shell
     logsource: category:process_creation - product:windows
@@ -9644,7 +9644,7 @@ def sigma_read_and_execute_a_file_via_cmd_exe(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_cmd_read_contents.yml
     title: Read and Execute a File Via Cmd.exe
-    fields: ['CommandLine', 'Image', 'ParentCommandLine', 'OriginalFileName']
+    fields: ['CommandLine', 'Image', 'OriginalFileName', 'ParentCommandLine']
     level: medium
     description: Detect use of "/R <" to read and execute a file via cmd.exe
     logsource: category:process_creation - product:windows
@@ -9892,7 +9892,7 @@ def sigma_dll_injection_with_tracker_exe(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_tracker_execution.yml
     title: DLL Injection with Tracker.exe
-    fields: ['CommandLine', 'Image', 'ParentImage', 'Description']
+    fields: ['CommandLine', 'Description', 'Image', 'ParentImage']
     level: medium
     description: This rule detects DLL injection and execution via LOLBAS - Tracker.exe
     logsource: category:process_creation - product:windows
@@ -9982,7 +9982,7 @@ def sigma_ie4uinit_lolbin_use_from_invalid_path(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_lolbin_ie4uinit.yml
     title: Ie4uinit Lolbin Use From Invalid Path
-    fields: ['Image', 'OriginalFileName', 'CurrentDirectory']
+    fields: ['CurrentDirectory', 'Image', 'OriginalFileName']
     level: medium
     description: Detect use of ie4uinit.exe to execute commands from a specially prepared ie4uinit.inf file from a directory other than the usual directories
     logsource: product:windows - category:process_creation
@@ -10102,7 +10102,7 @@ def sigma_psexec_service_execution_as_local_system(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_psexesvc_as_system.yml
     title: PsExec Service Execution as LOCAL SYSTEM
-    fields: ['User', 'ParentImage']
+    fields: ['ParentImage', 'User']
     level: high
     description: Detects suspicious launch of the PSEXESVC service on this system and a sub process run as LOCAL_SYSTEM (-s), which means that someone remotely started a command on this system running it with highest privileges and not only the privileges of the login user account (e.g. the administrator account)
     logsource: category:process_creation - product:windows
@@ -10297,7 +10297,7 @@ def sigma_abused_debug_privilege_by_arbitrary_parent_processes(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_abusing_debug_privilege.yml
     title: Abused Debug Privilege by Arbitrary Parent Processes
-    fields: ['CommandLine', 'Image', 'ParentImage', 'OriginalFileName', 'User']
+    fields: ['CommandLine', 'Image', 'OriginalFileName', 'ParentImage', 'User']
     level: high
     description: Detection of unusual child processes by different system processes
     logsource: product:windows - category:process_creation
@@ -10451,7 +10451,7 @@ def sigma_suspicious_spool_service_child_process(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_spoolsv_child_processes.yml
     title: Suspicious Spool Service Child Process
-    fields: ['IntegrityLevel', 'Image', 'ParentImage', 'CommandLine']
+    fields: ['CommandLine', 'Image', 'IntegrityLevel', 'ParentImage']
     level: high
     description: Detects suspicious print spool service (spoolsv.exe) child processes.
     logsource: category:process_creation - product:windows
@@ -10661,7 +10661,7 @@ def sigma_suspicious_razerinstaller_explorer_subprocess(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_razorinstaller_explorer.yml
     title: Suspicious RazerInstaller Explorer Subprocess
-    fields: ['IntegrityLevel', 'Image', 'ParentImage']
+    fields: ['Image', 'IntegrityLevel', 'ParentImage']
     level: high
     description: Detects a explorer.exe sub process of the RazerInstaller software which can be invoked from the installer to select a different installation folder but can also be exploited to escalate privileges to LOCAL SYSTEM
     logsource: category:process_creation - product:windows
@@ -10676,7 +10676,7 @@ def sigma_execution_of_renamed_paexec(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_renamed_paexec.yml
     title: Execution of Renamed PaExec
-    fields: ['Image', 'Hashes', 'Imphash', 'Product']
+    fields: ['Hashes', 'Image', 'Imphash', 'Product']
     level: medium
     description: Detects execution of renamed paexec via imphash and executable product string
     logsource: category:process_creation - product:windows
@@ -10691,7 +10691,7 @@ def sigma_suspicious_curl_usage_on_windows(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_curl_download.yml
     title: Suspicious Curl Usage on Windows
-    fields: ['CommandLine', 'Image', 'Product', 'ParentImage']
+    fields: ['CommandLine', 'Image', 'ParentImage', 'Product']
     level: high
     description: Detects a suspicious curl process start on Windows and outputs the requested document to a local file
     logsource: category:process_creation - product:windows
@@ -10781,7 +10781,7 @@ def sigma_uac_bypass_wsreset(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_uac_bypass_wsreset_integrity_level.yml
     title: UAC Bypass WSReset
-    fields: ['IntegrityLevel', 'Image']
+    fields: ['Image', 'IntegrityLevel']
     level: high
     description: Detects the pattern of UAC Bypass via WSReset usable by default sysmon-config
     logsource: category:process_creation - product:windows
@@ -11218,7 +11218,7 @@ def sigma_high_integrity_sdclt_process(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_high_integrity_sdclt.yml
     title: High Integrity Sdclt Process
-    fields: ['IntegrityLevel', 'Image']
+    fields: ['Image', 'IntegrityLevel']
     level: medium
     description: A General detection for sdclt being spawned as an elevated process. This could be an indicator of sdclt being used for bypass UAC techniques.
     logsource: category:process_creation - product:windows
@@ -11263,7 +11263,7 @@ def sigma_sharpup_privesc_tool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_sharpup.yml
     title: SharpUp PrivEsc Tool
-    fields: ['CommandLine', 'Image', 'Description']
+    fields: ['CommandLine', 'Description', 'Image']
     level: critical
     description: Detects the use of SharpUp, a tool for local privilege escalation
     logsource: category:process_creation - product:windows
@@ -11323,7 +11323,7 @@ def sigma_use_of_netsupport_remote_access_software(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_netsupport.yml
     title: Use of NetSupport Remote Access Software
-    fields: ['OriginalFileName', 'Product', 'Company', 'Description']
+    fields: ['Company', 'Description', 'OriginalFileName', 'Product']
     level: medium
     description: An adversary may use legitimate desktop support and remote access software, such as Team Viewer, Go2Assist, LogMein, AmmyyAdmin, etc, to establish an interactive command and control channel to target systems within networks.
 These services are commonly used as legitimate technical support software, and may be allowed by application control within a target environment.
@@ -11341,7 +11341,7 @@ def sigma_detecting_fake_instances_of_hxtsr_exe(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_detecting_fake_instances_of_hxtsr.yml
     title: Detecting Fake Instances Of Hxtsr.exe
-    fields: ['Image', 'CurrentDirectory']
+    fields: ['CurrentDirectory', 'Image']
     level: medium
     description: HxTsr.exe is a Microsoft compressed executable file called Microsoft Outlook Communications.HxTsr.exe is part of Outlook apps, because it resides in a hidden "WindowsApps" subfolder of "C:\Program Files". Its path includes a version number, e.g., "C:\Program Files\WindowsApps\microsoft.windowscommunicationsapps_17.7466.41167.0_x64__8wekyb3d8bbwe\HxTsr.exe". Any instances of hxtsr.exe not in this folder may be malware camouflaging itself as HxTsr.exe
     logsource: product:windows - category:process_creation
@@ -11686,7 +11686,7 @@ def sigma_nps_tunneling_tool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_nps.yml
     title: NPS Tunneling Tool
-    fields: ['CommandLine', 'Image', 'md5', 'Hashes', 'sha1', 'sha256']
+    fields: ['CommandLine', 'Hashes', 'Image', 'md5', 'sha1', 'sha256']
     level: high
     description: Detects the use of NPS a port forwarding tool
     logsource: category:process_creation - product:windows
@@ -11761,7 +11761,7 @@ def sigma_suspicious_xor_encoded_powershell_command_line(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_powershell_xor_commandline.yml
     title: Suspicious XOR Encoded PowerShell Command Line
-    fields: ['CommandLine', 'Product', 'ParentImage', 'Description']
+    fields: ['CommandLine', 'Description', 'ParentImage', 'Product']
     level: medium
     description: Detects suspicious powershell process which includes bxor command, alternative obfuscation method to b64 encoded commands.
     logsource: category:process_creation - product:windows
@@ -11866,7 +11866,7 @@ def sigma_run_whoami_as_system(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_whoami_as_system.yml
     title: Run Whoami as SYSTEM
-    fields: ['User', 'Image', 'OriginalFileName']
+    fields: ['Image', 'OriginalFileName', 'User']
     level: high
     description: Detects a whoami.exe executed by LOCAL SYSTEM. This may be a sign of a successful local privilege escalation.
     logsource: category:process_creation - product:windows
@@ -11947,7 +11947,7 @@ def sigma_windows_firewall_disabled_via_powershell(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_firewall_disabled_via_powershell.yml
     title: Windows Firewall Disabled via PowerShell
-    fields: ['CommandLine', 'OriginalFilename', 'Image']
+    fields: ['CommandLine', 'Image', 'OriginalFilename']
     level: medium
     description: Detects attempts to disable the Windows Firewall using PowerShell
     logsource: category:process_creation - product:windows
@@ -12007,7 +12007,7 @@ def sigma_suspicious_powershell_invocation_based_on_parent_process(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_powershell_parent_combo.yml
     title: Suspicious PowerShell Invocation Based on Parent Process
-    fields: ['Image', 'ParentImage', 'CurrentDirectory']
+    fields: ['CurrentDirectory', 'Image', 'ParentImage']
     level: medium
     description: Detects suspicious powershell invocations from interpreters or unusual programs
     logsource: category:process_creation - product:windows
@@ -12022,7 +12022,7 @@ def sigma_uac_bypass_using_windows_media_player_process(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_uac_bypass_wmp.yml
     title: UAC Bypass Using Windows Media Player - Process
-    fields: ['IntegrityLevel', 'Image', 'ParentCommandLine']
+    fields: ['Image', 'IntegrityLevel', 'ParentCommandLine']
     level: high
     description: Detects the pattern of UAC Bypass using Windows Media Player osksupport.dll (UACMe 32)
     logsource: category:process_creation - product:windows
@@ -12067,7 +12067,7 @@ def sigma_fast_reverse_proxy_frp_(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_frp.yml
     title: Fast Reverse Proxy (FRP)
-    fields: ['CommandLine', 'Image', 'md5', 'Hashes', 'sha1', 'sha256']
+    fields: ['CommandLine', 'Hashes', 'Image', 'md5', 'sha1', 'sha256']
     level: high
     description: Detects the use of Fast Reverse Proxy. frp is a fast reverse proxy to help you expose a local server behind a NAT or firewall to the Internet.
     logsource: category:process_creation - product:windows
@@ -12354,7 +12354,7 @@ def sigma_execution_of_renamed_netsupport_rat(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_renamed_netsupport_rat.yml
     title: Execution of Renamed NetSupport RAT
-    fields: ['Image', 'Hashes', 'OriginalFileName', 'Product', 'Imphash']
+    fields: ['Hashes', 'Image', 'Imphash', 'OriginalFileName', 'Product']
     level: high
     description: Detects execution of renamed client32.exe (NetSupport RAT) via Imphash, Product and OriginalFileName strings
     logsource: category:process_creation - product:windows
@@ -12489,7 +12489,7 @@ def sigma_winrar_compressing_dump_files(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_winrar_dmp.yml
     title: Winrar Compressing Dump Files
-    fields: ['CommandLine', 'Image', 'Description']
+    fields: ['CommandLine', 'Description', 'Image']
     level: high
     description: Detects a suspicious winrar execution that involves a file with a .dmp extension, which could be a step in a process of dump file exfiltration
     logsource: category:process_creation - product:windows
@@ -12624,7 +12624,7 @@ def sigma_handlekatz_lsass_dumper_usage(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_handlekatz.yml
     title: HandleKatz LSASS Dumper Usage
-    fields: ['CommandLine', 'Image', 'Hashes', 'Imphash']
+    fields: ['CommandLine', 'Hashes', 'Image', 'Imphash']
     level: high
     description: Detects the use of HandleKatz, a tool that demonstrates the usage of cloned handles to Lsass in order to create an obfuscated memory dump of the same
     logsource: category:process_creation - product:windows
@@ -13029,7 +13029,7 @@ def sigma_rclone_execution_via_command_line_or_powershell(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_rclone_execution.yml
     title: Rclone Execution via Command Line or PowerShell
-    fields: ['CommandLine', 'Image', 'ParentImage', 'Description']
+    fields: ['CommandLine', 'Description', 'Image', 'ParentImage']
     level: high
     description: Detects execution of RClone utility for exfiltration as used by various ransomwares strains like REvil, Conti, FiveHands, etc
     logsource: product:windows - category:process_creation
@@ -13044,7 +13044,7 @@ def sigma_privilege_escalation_via_named_pipe_impersonation(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_priv_escalation_via_named_pipe.yml
     title: Privilege Escalation via Named Pipe Impersonation
-    fields: ['CommandLine', 'OriginalFilename', 'Image']
+    fields: ['CommandLine', 'Image', 'OriginalFilename']
     level: high
     description: Detects a remote file copy attempt to a hidden network share. This may indicate lateral movement or data staging activity.
     logsource: category:process_creation - product:windows
@@ -13104,7 +13104,7 @@ def sigma_psexec_tool_execution(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_tool_psexec.yml
     title: PsExec Tool Execution
-    fields: ['User', 'Image']
+    fields: ['Image', 'User']
     level: low
     description: Detects PsExec service execution via default service image name
     logsource: category:process_creation - product:windows
@@ -13224,7 +13224,7 @@ def sigma_scheduled_task_creation(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_schtask_creation.yml
     title: Scheduled Task Creation
-    fields: ['CommandLine', 'User', 'Image']
+    fields: ['CommandLine', 'Image', 'User']
     level: low
     description: Detects the creation of scheduled tasks in user session
     logsource: category:process_creation - product:windows
@@ -13466,7 +13466,7 @@ def sigma_suspicious_microsoft_onenote_child_process(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_microsoft_onenote_child_process.yml
     title: Suspicious Microsoft OneNote Child Process
-    fields: ['CommandLine', 'OriginalFilename', 'Image', 'ParentImage']
+    fields: ['CommandLine', 'Image', 'OriginalFilename', 'ParentImage']
     level: medium
     description: Detects suspicious child processes of the Microsoft OneNote application. This may indicate an attempt to execute malicious embedded objects from a .one file.
     logsource: category:process_creation - product:windows
@@ -13556,7 +13556,7 @@ def sigma_use_of_ultraviewer_remote_access_software(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_ultraviewer.yml
     title: Use of UltraViewer Remote Access Software
-    fields: ['OriginalFileName', 'Product', 'Company']
+    fields: ['Company', 'OriginalFileName', 'Product']
     level: medium
     description: An adversary may use legitimate desktop support and remote access software, such as Team Viewer, Go2Assist, LogMein, AmmyyAdmin, etc, to establish an interactive command and control channel to target systems within networks.
 These services are commonly used as legitimate technical support software, and may be allowed by application control within a target environment.
@@ -13574,7 +13574,7 @@ def sigma_execution_of_netsupport_rat_from_unusual_location(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_netsupport_rat_exec_location.yml
     title: Execution of NetSupport RAT From Unusual Location
-    fields: ['Image', 'Hashes', 'OriginalFileName', 'Product', 'Imphash']
+    fields: ['Hashes', 'Image', 'Imphash', 'OriginalFileName', 'Product']
     level: medium
     description: Detects execution of client32.exe (NetSupport RAT) from an unsual location (outisde of 'C:\Program Files')
     logsource: category:process_creation - product:windows
@@ -13679,7 +13679,7 @@ def sigma_securityxploded_tool(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_hack_secutyxploded.yml
     title: SecurityXploded Tool
-    fields: ['Image', 'OriginalFileName', 'Company']
+    fields: ['Company', 'Image', 'OriginalFileName']
     level: critical
     description: Detects the execution of SecurityXploded Tools
     logsource: category:process_creation - product:windows
@@ -14257,7 +14257,7 @@ def sigma_renamed_zoho_dctask64(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_renamed_dctask64.yml
     title: Renamed ZOHO Dctask64
-    fields: ['Image', 'Hashes']
+    fields: ['Hashes', 'Image']
     level: high
     description: Detects a renamed dctask64.exe used for process injection, command execution, process creation with a signed binary by ZOHO Corporation
     logsource: category:process_creation - product:windows
@@ -14347,7 +14347,7 @@ def sigma_recon_information_for_export_with_command_prompt(record):
     """
     file_id: rules/windows/process_creation/proc_creation_win_susp_recon.yml
     title: Recon Information for Export with Command Prompt
-    fields: ['Image', 'ParentCommandLine', 'OriginalFileName']
+    fields: ['Image', 'OriginalFileName', 'ParentCommandLine']
     level: medium
     description: Once established within a system or network, an adversary may use automated techniques for collecting internal data.
     logsource: product:windows - category:process_creation
@@ -14506,6 +14506,21 @@ def sigma_emissary_panda_malware_sllauncher(record):
 
 sigma_emissary_panda_malware_sllauncher.sigma_meta = dict(
     level="critical"
+)
+
+def sigma_malicious_powershell_commandlets(record):
+    """
+    file_id: rules/powershell_exploit_scripts.yml
+    title: Malicious PowerShell Commandlets
+    fields: ['CommandLine']
+    level: high
+    description: Detects Commandlet names from well-known PowerShell exploitation frameworks
+    logsource: product:windows - category:ps_script - definition:Script Block Logging must be enabled
+    """
+    return (record['COMMAND_LINE'].contains("Invoke-DllInjection") or record['COMMAND_LINE'].contains("Invoke-Shellcode") or record['COMMAND_LINE'].contains("Invoke-WmiCommand") or record['COMMAND_LINE'].contains("Get-GPPPassword") or record['COMMAND_LINE'].contains("Get-Keystrokes") or record['COMMAND_LINE'].contains("Get-TimedScreenshot") or record['COMMAND_LINE'].contains("Get-VaultCredential") or record['COMMAND_LINE'].contains("Invoke-CredentialInjection") or record['COMMAND_LINE'].contains("Invoke-Mimikatz") or record['COMMAND_LINE'].contains("Invoke-NinjaCopy") or record['COMMAND_LINE'].contains("Invoke-TokenManipulation") or record['COMMAND_LINE'].contains("Out-Minidump") or record['COMMAND_LINE'].contains("VolumeShadowCopyTools") or record['COMMAND_LINE'].contains("Invoke-ReflectivePEInjection") or record['COMMAND_LINE'].contains("Invoke-UserHunter") or record['COMMAND_LINE'].contains("Find-GPOLocation") or record['COMMAND_LINE'].contains("Invoke-ACLScanner") or record['COMMAND_LINE'].contains("Invoke-DowngradeAccount") or record['COMMAND_LINE'].contains("Get-ServiceUnquoted") or record['COMMAND_LINE'].contains("Get-ServiceFilePermission") or record['COMMAND_LINE'].contains("Get-ServicePermission") or record['COMMAND_LINE'].contains("Invoke-ServiceAbuse") or record['COMMAND_LINE'].contains("Install-ServiceBinary") or record['COMMAND_LINE'].contains("Get-RegAutoLogon") or record['COMMAND_LINE'].contains("Get-VulnAutoRun") or record['COMMAND_LINE'].contains("Get-VulnSchTask") or record['COMMAND_LINE'].contains("Get-UnattendedInstallFile") or record['COMMAND_LINE'].contains("Get-ApplicationHost") or record['COMMAND_LINE'].contains("Get-RegAlwaysInstallElevated") or record['COMMAND_LINE'].contains("Get-Unconstrained") or record['COMMAND_LINE'].contains("Add-RegBackdoor") or record['COMMAND_LINE'].contains("Add-ScrnSaveBackdoor") or record['COMMAND_LINE'].contains("Gupt-Backdoor") or record['COMMAND_LINE'].contains("Invoke-ADSBackdoor") or record['COMMAND_LINE'].contains("Enabled-DuplicateToken") or record['COMMAND_LINE'].contains("Invoke-PsUaCme") or record['COMMAND_LINE'].contains("Remove-Update") or record['COMMAND_LINE'].contains("Check-VM") or record['COMMAND_LINE'].contains("Get-LSASecret") or record['COMMAND_LINE'].contains("Get-PassHashes") or record['COMMAND_LINE'].contains("Show-TargetScreen") or record['COMMAND_LINE'].contains("Port-Scan") or record['COMMAND_LINE'].contains("Invoke-PoshRatHttp") or record['COMMAND_LINE'].contains("Invoke-PowerShellTCP") or record['COMMAND_LINE'].contains("Invoke-PowerShellWMI") or record['COMMAND_LINE'].contains("Add-Exfiltration") or record['COMMAND_LINE'].contains("Add-Persistence") or record['COMMAND_LINE'].contains("Do-Exfiltration") or record['COMMAND_LINE'].contains("Start-CaptureServer") or record['COMMAND_LINE'].contains("Get-ChromeDump") or record['COMMAND_LINE'].contains("Get-ClipboardContents") or record['COMMAND_LINE'].contains("Get-FoxDump") or record['COMMAND_LINE'].contains("Get-IndexedItem") or record['COMMAND_LINE'].contains("Get-Screenshot") or record['COMMAND_LINE'].contains("Invoke-Inveigh") or record['COMMAND_LINE'].contains("Invoke-NetRipper") or record['COMMAND_LINE'].contains("Invoke-EgressCheck") or record['COMMAND_LINE'].contains("Invoke-PostExfil") or record['COMMAND_LINE'].contains("Invoke-PSInject") or record['COMMAND_LINE'].contains("Invoke-RunAs") or record['COMMAND_LINE'].contains("MailRaider") or record['COMMAND_LINE'].contains("New-HoneyHash") or record['COMMAND_LINE'].contains("Set-MacAttribute") or record['COMMAND_LINE'].contains("Invoke-DCSync") or record['COMMAND_LINE'].contains("Invoke-PowerDump") or record['COMMAND_LINE'].contains("Exploit-Jboss") or record['COMMAND_LINE'].contains("Invoke-ThunderStruck") or record['COMMAND_LINE'].contains("Invoke-VoiceTroll") or record['COMMAND_LINE'].contains("Set-Wallpaper") or record['COMMAND_LINE'].contains("Invoke-InveighRelay") or record['COMMAND_LINE'].contains("Invoke-PsExec") or record['COMMAND_LINE'].contains("Invoke-SSHCommand") or record['COMMAND_LINE'].contains("Get-SecurityPackages") or record['COMMAND_LINE'].contains("Install-SSP") or record['COMMAND_LINE'].contains("Invoke-BackdoorLNK") or record['COMMAND_LINE'].contains("PowerBreach") or record['COMMAND_LINE'].contains("Get-SiteListPassword") or record['COMMAND_LINE'].contains("Get-System") or record['COMMAND_LINE'].contains("Invoke-BypassUAC") or record['COMMAND_LINE'].contains("Invoke-Tater") or record['COMMAND_LINE'].contains("Invoke-WScriptBypassUAC") or record['COMMAND_LINE'].contains("PowerUp") or record['COMMAND_LINE'].contains("PowerView") or record['COMMAND_LINE'].contains("Get-RickAstley") or record['COMMAND_LINE'].contains("Find-Fruit") or record['COMMAND_LINE'].contains("HTTP-Login") or record['COMMAND_LINE'].contains("Find-TrustedDocuments") or record['COMMAND_LINE'].contains("Invoke-Paranoia") or record['COMMAND_LINE'].contains("Invoke-WinEnum") or record['COMMAND_LINE'].contains("Invoke-ARPScan") or record['COMMAND_LINE'].contains("Invoke-PortScan") or record['COMMAND_LINE'].contains("Invoke-ReverseDNSLookup") or record['COMMAND_LINE'].contains("Invoke-SMBScanner") or record['COMMAND_LINE'].contains("Invoke-Mimikittenz") or record['COMMAND_LINE'].contains("Invoke-AllChecks") or record['COMMAND_LINE'].contains("Invoke-BadPotato") or record['COMMAND_LINE'].contains("Invoke-BetterSafetyKatz") or record['COMMAND_LINE'].contains("Invoke-Carbuncle") or record['COMMAND_LINE'].contains("Invoke-Certify") or record['COMMAND_LINE'].contains("Invoke-DAFT") or record['COMMAND_LINE'].contains("Invoke-DinvokeKatz") or record['COMMAND_LINE'].contains("Invoke-Eyewitness") or record['COMMAND_LINE'].contains("Invoke-FakeLogonScreen") or record['COMMAND_LINE'].contains("Invoke-Farmer") or record['COMMAND_LINE'].contains("Invoke-Get-RBCD-Threaded") or record['COMMAND_LINE'].contains("Invoke-Gopher") or record['COMMAND_LINE'].contains("Invoke-Grouper2") or record['COMMAND_LINE'].contains("Invoke-HandleKatz") or record['COMMAND_LINE'].contains("Invoke-Internalmonologue") or record['COMMAND_LINE'].contains("Invoke-KrbRelayUp") or record['COMMAND_LINE'].contains("Invoke-LdapSignCheck") or record['COMMAND_LINE'].contains("Invoke-Lockless") or record['COMMAND_LINE'].contains("Invoke-MITM6") or record['COMMAND_LINE'].contains("Invoke-NanoDump") or record['COMMAND_LINE'].contains("Invoke-OxidResolver") or record['COMMAND_LINE'].contains("Invoke-P0wnedshell") or record['COMMAND_LINE'].contains("Invoke-PPLDump") or record['COMMAND_LINE'].contains("Invoke-Rubeus") or record['COMMAND_LINE'].contains("Invoke-SCShell") or record['COMMAND_LINE'].contains("Invoke-SafetyKatz") or record['COMMAND_LINE'].contains("Invoke-SauronEye") or record['COMMAND_LINE'].contains("Invoke-Seatbelt") or record['COMMAND_LINE'].contains("Invoke-SharPersist") or record['COMMAND_LINE'].contains("Invoke-SharpAllowedToAct") or record['COMMAND_LINE'].contains("Invoke-SharpBlock") or record['COMMAND_LINE'].contains("Invoke-SharpBypassUAC") or record['COMMAND_LINE'].contains("Invoke-SharpChromium") or record['COMMAND_LINE'].contains("Invoke-SharpClipboard") or record['COMMAND_LINE'].contains("Invoke-SharpCloud") or record['COMMAND_LINE'].contains("Invoke-SharpDPAPI") or record['COMMAND_LINE'].contains("Invoke-SharpDump") or record['COMMAND_LINE'].contains("Invoke-SharpGPO-RemoteAccessPolicies") or record['COMMAND_LINE'].contains("Invoke-SharpGPOAbuse") or record['COMMAND_LINE'].contains("Invoke-SharpHandler") or record['COMMAND_LINE'].contains("Invoke-SharpHide") or record['COMMAND_LINE'].contains("Invoke-SharpHound4") or record['COMMAND_LINE'].contains("Invoke-SharpImpersonation") or record['COMMAND_LINE'].contains("Invoke-SharpImpersonationNoSpace") or record['COMMAND_LINE'].contains("Invoke-SharpKatz") or record['COMMAND_LINE'].contains("Invoke-SharpLdapRelayScan") or record['COMMAND_LINE'].contains("Invoke-SharpLoginPrompt") or record['COMMAND_LINE'].contains("Invoke-SharpMove") or record['COMMAND_LINE'].contains("Invoke-SharpPrintNightmare") or record['COMMAND_LINE'].contains("Invoke-SharpPrinter") or record['COMMAND_LINE'].contains("Invoke-SharpRDP") or record['COMMAND_LINE'].contains("Invoke-SharpSSDP") or record['COMMAND_LINE'].contains("Invoke-SharpSecDump") or record['COMMAND_LINE'].contains("Invoke-SharpSniper") or record['COMMAND_LINE'].contains("Invoke-SharpSploit") or record['COMMAND_LINE'].contains("Invoke-SharpSpray") or record['COMMAND_LINE'].contains("Invoke-SharpStay") or record['COMMAND_LINE'].contains("Invoke-SharpUp") or record['COMMAND_LINE'].contains("Invoke-SharpWatson") or record['COMMAND_LINE'].contains("Invoke-Sharphound2") or record['COMMAND_LINE'].contains("Invoke-Sharphound3") or record['COMMAND_LINE'].contains("Invoke-Sharplocker") or record['COMMAND_LINE'].contains("Invoke-Sharpshares") or record['COMMAND_LINE'].contains("Invoke-Sharpview") or record['COMMAND_LINE'].contains("Invoke-Sharpweb") or record['COMMAND_LINE'].contains("Invoke-Snaffler") or record['COMMAND_LINE'].contains("Invoke-Spoolsample") or record['COMMAND_LINE'].contains("Invoke-StandIn") or record['COMMAND_LINE'].contains("Invoke-StickyNotesExtract") or record['COMMAND_LINE'].contains("Invoke-Thunderfox") or record['COMMAND_LINE'].contains("Invoke-Tokenvator") or record['COMMAND_LINE'].contains("Invoke-UrbanBishop") or record['COMMAND_LINE'].contains("Invoke-Whisker") or record['COMMAND_LINE'].contains("Invoke-WireTap") or record['COMMAND_LINE'].contains("Invoke-winPEAS") or record['COMMAND_LINE'].contains("Invoke-Zerologon") or record['COMMAND_LINE'].contains("Get-USBKeystrokes") or record['COMMAND_LINE'].contains("Start-WebcamRecorder") or record['COMMAND_LINE'].contains("Invoke-OfficeScrape") or record['COMMAND_LINE'].contains("Invoke-DomainPasswordSpray") or record['COMMAND_LINE'].contains("Invoke-SpraySinglePassword"))
+
+sigma_malicious_powershell_commandlets.sigma_meta = dict(
+    level="high"
 )
 
 CLI_ONLY_COMPAT_METHODS=[
@@ -14725,5 +14740,6 @@ CLI_ONLY_COMPAT_METHODS=[
   "sigma_copy_dmp_files_from_share",
   "sigma_cl_mutexverifiers_ps1_proxy_execution",
   "sigma_invoke_obfuscation_clip_launcher",
-  "sigma_powershell_get_process_lsass"
+  "sigma_powershell_get_process_lsass",
+  "sigma_malicious_powershell_commandlets"
 ]

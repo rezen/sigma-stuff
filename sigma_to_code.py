@@ -77,14 +77,14 @@ def fields_used(rule_config):
     all_fields = set()
     for key in detection:
         if isinstance(detection[key], dict):
-            fields = sorted([_field_raw(x) for x in list(detection[key].keys())])
+            fields = [_field_raw(x) for x in list(detection[key].keys())]
             all_fields.update(fields)
         elif isinstance(detection[key], list):
             for entry in detection[key]:
                 if isinstance(entry, dict):
-                    fields = sorted([_field_raw(x) for x in list(entry.keys())])
+                    fields = [_field_raw(x) for x in list(entry.keys())]
                     all_fields.update(fields)
-    return list(all_fields)
+    return sorted(list(all_fields))
 
 
 sigma_dir = os.environ.get("SIGMA_DIR", str(Path.home()) + "/co/sigma")
@@ -101,17 +101,20 @@ backend = PythonX(config)
 sql_backend = SQLBackend(SigmaConfiguration(), "x")
 
 files = glob(f"{sigma_dir}/rules/windows/process_creation/*.yml")
-
+files.extend(glob(f"rules/*.yml"))
 skipped = 0
 used = 0
 error_count = 0
 
+errored_code = "import re\n"
 code = "import re\n"
 by_fields = defaultdict(list)
 compat_fields = set(["CommandLine"])
 compat_methods = []
 sql_code = ""
+
 for file in files:
+    codegen = ""
     rule_config = yaml.safe_load(open(file))
     rule_config["file_id"] = file.replace(sigma_dir, "").lstrip("/")
     rule_config["fields"] = fields_used(rule_config)
@@ -121,28 +124,42 @@ for file in files:
         a.lower() for a in title_temp.split(" ")
     )
     fields = set(rule_config["fields"])
-
+    is_cli_only = len(fields) == 1 and 'CommandLine' in fields
 
     try:
         parser = SigmaParser(rule_config, config)
-        query = backend.generate(parser)
-        ast.parse(query)
-        code += query
+    except:
+        if is_cli_only:
+            print("!!! Review " + rule_config["file_id"])
+        continue
+
+
 
         # See if is command line only rule
-        if len(fields) == 1 and 'CommandLine' in fields:
-            compat_methods.append(rule_config["function_name"])
+    if is_cli_only:
+        try:
             # @todo validate sql
             tmp_code =  sql_backend.generate(parser)
             if tmp_code:
                 sql_code += f"-- sigma rule file {rule_config['file_id']};\n"
                 sql_code += tmp_code
                 sql_code += "\n\n"
+        except: pass
+
+    try:
+        codegen = backend.generate(parser)
+        ast.parse("import re\n" + codegen)
+        code += codegen
+
+        # See if is command line only rule
+        if is_cli_only:
+            compat_methods.append(rule_config["function_name"])
 
     except Exception as err:
         error_count += 1
-        if len(fields) == 1 and 'CommandLine' in fields:
+        if is_cli_only:
             print("!!! Review " + rule_config["file_id"])
+            errored_code += codegen
 
 code += "\n"
 code += "CLI_ONLY_COMPAT_METHODS=" + json.dumps(list(compat_methods), indent=2)
@@ -151,6 +168,10 @@ ast.parse(code)
 
 with open("sigma_windows_proc_rules.py", "w+") as fh:
     fh.write(code)
+
+with open("__failed_sigma_code.py", "w+") as fh:
+    fh.write(errored_code)
+
 
 with open("sigma_windows_proc_rules.sql", "w+") as fh:
     fh.write(sql_code)
