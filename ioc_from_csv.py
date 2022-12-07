@@ -55,7 +55,7 @@ try:
     import sigma_cli_rules
 except:
     print("You need this file to execute sigmas rules!")
-    print("https://github.com/rezen/sigma-stuff/blob/main/sigma_windows_proc_rules.py")
+    print("https://github.com/rezen/sigma-stuff/blob/main/sigma_cli_rules.py")
 
 
 DATA_TOR_EXIT_NODES = None
