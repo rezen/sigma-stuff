@@ -3,3 +3,4 @@ __pycache__
 .DS_Store
 ioc_data.json
 **.db
+__failed_sigma_code.py
