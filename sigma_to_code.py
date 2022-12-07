@@ -101,7 +101,7 @@ backend = PythonX(config)
 sql_backend = SQLBackend(SigmaConfiguration(), "x")
 
 files = glob(f"{sigma_dir}/rules/windows/process_creation/*.yml")
-files.extend(glob(f"rules/*.yml"))
+files.extend(glob(f"rules/custom/*.yml"))
 skipped = 0
 used = 0
 error_count = 0
