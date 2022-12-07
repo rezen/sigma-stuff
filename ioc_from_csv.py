@@ -52,7 +52,7 @@ except Exception as err:
     print("pip3 install msticpy pandas whois redis requests click")
 
 try:
-    import sigma_windows_proc_rules
+    import sigma_cli_rules
 except:
     print("You need this file to execute sigmas rules!")
     print("https://github.com/rezen/sigma-stuff/blob/main/sigma_windows_proc_rules.py")
@@ -175,9 +175,9 @@ def get_ioc_extractor():
 @cached
 def get_sigmas_matches(command: str):
     matches = []
-    for method in sigma_windows_proc_rules.CLI_ONLY_COMPAT_METHODS:
+    for method in sigma_cli_rules.CLI_ONLY_COMPAT_METHODS:
         try:
-            sigma_rule = getattr(sigma_windows_proc_rules, method)
+            sigma_rule = getattr(sigma_cli_rules, method)
             is_match = sigma_rule(
                 {
                     "_raw": Stringy(command),
@@ -186,9 +186,8 @@ def get_sigmas_matches(command: str):
             )
             if is_match:
                 # Include level in the string for starters
-                if hasattr(sigma_rule, "sigma_meta"):
-                    method = method + ":" + sigma_rule.sigma_meta.get("level", "_")
-                matches.append(method)
+                method = method + ":" + sigma_rule.sigma_meta.get("level", "_")
+                matches.append(method[6:])
         except Exception as err:
             pass
     return matches
@@ -290,6 +289,7 @@ def command_to_ioc_data(command: str):
     sigmas_severe_count = len(
         [r for r in record["sigma_matches"] if ":high" in r or ":crit" in r]
     )
+
 
     record["sigma_matches_count"] = sigma_count
     record["sigma_severe_count"] = sigmas_severe_count
