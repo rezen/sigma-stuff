@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% set sus_columns=['', 'cid', 'command_line', 'iocs_count', 'iocs_network_count', 'sigma_matches_count', 'sigma_matches'] %}
+{% set ioc_columns=['cid', 'ioc_type', 'ioc_value'] %}
+<style>
+    .container {
+  display: flex; /* or inline-flex */
+}
+
+.is-comprimised-row td{
+    background: red;
+}
+
+.not-comprimised-row td{
+    opacity: 0.5;
+}
+</style>
+<select id="filter-sigma-rule">
+        {% for rule in sigma_rule_counts %}
+
+                <option value="{{ rule }}">{{ rule }} - {{ sigma_rule_counts[rule] }}</option>
+        {% endfor %}
+
+</select>
+<section class="container" style="height:;400px">
+    <div id="map" style="width:33%;background: blue;"></div>
+    <div id="map" style="width:33%;background: red;"></div>
+    <div id="map" style="width:33%;background:yellow;"></div>
+</section>
+<section class="container-too-too">
+<div style="width:100%;background: #eee;">
+    <header id="table-controls" style="background:green">
+        <button id="mark-all-positive">+</button>
+        <button id="mark-all-negative">-</button>
+        <hr />
+    </header>
+    <div>
+<table id="table-for-suspicious" class="display">
+    <thead>
+        <tr>
+            {%- for h in sus_columns %}
+ <th>{{ h -}}</th>
+{% endfor %}
+        </tr>
+    </thead>
+    <tfoot>
+        <tr>
+            {%- for h in sus_columns %}
+            <th>{{ h -}}</th>
+           {% endfor %}
+        </tr>
+    </tfoot>
+</table>
+</div>
+</div>
+
+</section>
+
+<style>
+#map {
+    height: 600px;
+    z-index: 1;
+    position: relative;
+ }
+.col-command_line pre {
+    max-width: 400px;
+    font-family: monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+}
+
+</style>
+<script>
+    async function loadNames() {
+        const response = await fetch('_api/geo/countries');
+        const names = await response.json();
+        return names
+    }
+
+
+    async function geography() {
+        const response = await fetch('_api/geo/features');
+        const names = await response.json();
+        return names
+    }
+
+
+    document.addEventListener("DOMContentLoaded",  async function() {
+        columns = ['cid', 'command_line', 'iocs_count',  'iocs_network_count', 'sigma_matches_count', 'sigma_matches'].map(c => {
+            var render =  function (td, cellData, rowData, row, col) {
+                $(td).data('col', c)
+                };
+            if (c == 'command_line') {
+                render = function (td, cellData, rowData, row, col) {
+                    $(td).data('col', c)
+                    pre = document.createElement('pre')
+                    pre.innerText =cellData
+                    td.innerText = ""
+                    td.appendChild(pre)
+                }
+            } else if (c == "cid") {
+                render = function (td, cellData, rowData, row, col) {
+                    $(td).data('col', c)
+                    pre = document.createElement('a')
+                    pre.href = "view/cid/" + cellData
+                    pre.rel = "ajax:modal"
+                    pre.innerText = cellData
+                    td.innerText = ""
+                    td.appendChild(pre)
+                }
+
+            }
+
+            return {
+                data: c,
+                className: `col-${c}`,
+                createdCell: render
+            }
+        })
+
+        columns.unshift({
+             "data": null,
+             "defaultContent": "",
+             createdCell: function (td, cellData, rowData, row, col) {
+                    var isComprimised = rowData.status?.is_comprimised
+                    isComprimised = isComprimised === undefined ? null : isComprimised;
+
+                    if (isComprimised !== null) {
+                        td.innerText = isComprimised
+                        return;
+                    }
+
+                    el = document.createElement('button')
+                    el.setAttribute('action', '/_api/cid/' + rowData.cid + '/is_comprimised')
+                    el.innerText = "+"
+                    $(el).data({
+                        is_comprimised: true,
+                    });
+                    td.appendChild(el)
+
+                    el = document.createElement('button')
+                    el.setAttribute('action', '/_api/cid/' + rowData.cid + '/is_comprimised')
+                    el.innerText = "-"
+                    $(el).data({
+                        is_comprimised: false,
+                    });
+                    td.appendChild(el)
+            }
+        })
+
+        var suspiciousTable$ = $('#table-for-suspicious');
+        var iocsTable$ = $('#table-for-iocs');
+
+        window.table = suspiciousTable$.DataTable({
+            ajax: '/_api/suspicious',
+            columns,
+            pageLength: 50,
+            createdRow: function( row, data, dataIndex){
+                var isComprimised = data.status?.is_comprimised
+
+                if (isComprimised === true) {
+                    $(row).addClass('is-comprimised-row');
+                } else if (isComprimised === false) {
+                    $(row).addClass('not-comprimised-row');
+                }
+            }
+        });
+
+
+        var iocsTable = iocsTable$.DataTable({
+            ajax: ''
+        })
+
+
+        suspiciousTable$.on('click', 'tr', function(evt) {
+            var col = $(evt.target).data();
+            var row = table.row( this ).data() ;
+
+            if (!row) {
+                return;
+            }
+                iocsTable.ajax.url( '_api/cid/' + row.cid ).load();
+        })
+
+
+
+        suspiciousTable$.on('click', 'button', function(evt) {
+            var data = $(evt.target).data();
+            var action = evt.target.getAttribute('action')
+            fetch(action, {
+                method: 'POST', // or 'PUT'
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            }).then(x => {
+                $(evt.target).parent().html("")
+            })
+        })
+
+
+
+
+        $('body').on('click', 'a', function(evt) {
+            if (evt.target.getAttribute('rel') != "ajax:modal") {
+                return true;
+            }
+            $.ajax({
+
+url: $(event.target).attr('href'),
+
+success: function(newHTML, textStatus, jqXHR) {
+$('.modal').html(newHTML)
+},
+
+error: function(jqXHR, textStatus, errorThrown) {
+// Handle AJAX errors
+}
+
+// More AJAX customization goes here.
+
+});
+
+return false;
+
+        })
+
+        suspiciousTable$.on('click', 'a', function(event) {
+            $.ajax({
+
+        url: $(event.target).attr('href'),
+
+        success: function(newHTML, textStatus, jqXHR) {
+        $(newHTML).appendTo('body').modal();
+        },
+
+        error: function(jqXHR, textStatus, errorThrown) {
+        // Handle AJAX errors
+        }
+
+        // More AJAX customization goes here.
+
+        });
+
+        return false;
+});
+
+
+        var tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 18,
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Points &copy 2012 LINZ'
+			}),
+			latlng = L.latLng(51.507359, -0.136439);
+		    var map = L.map('map', {center: latlng, zoom: 3, layers: [tiles]});
+            var markers = L.markerClusterGroup({
+                spiderfyOnMaxZoom: false,
+                zoomToBoundsOnClick: false
+
+            });
+
+            var geo = await geography();
+
+
+            L.geoJSON(geo.features, {
+                style:{
+                    opacity: 1
+                }
+            }).addTo(map);
+
+
+       var result = await loadNames()
+           result.map(r => {
+            var title = r.country + r.cid
+            var marker = L.circleMarker(r.coords, {
+                radius: 10,
+                title: title
+            });
+            marker.bindPopup(title);
+            markers.addLayer(marker);
+           })
+           map.addLayer(markers);
+
+
+           document.getElementById('mark-all-negative').addEventListener('click', (evt) => {
+
+                var withoutStatus = table.rows( { search:'applied' } ).data().filter(r => [undefined, null].includes(r.status.is_comprimised))
+                var cids = withoutStatus.map(r => r.cid);
+                fetch('/_api/bulk/is_comprimised', {
+                        method: 'POST', // or 'PUT'
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            cids: Array.from(cids),
+                            is_comprimised: false
+                        }),
+                    }).then(x => {
+                        table.ajax.reload();
+
+                    })
+           });
+
+    });
+</script>
+{% endblock %}

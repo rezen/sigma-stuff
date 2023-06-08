@@ -1,0 +1,62 @@
+<div>
+    status={{ status.is_comprimised }}
+    <hr />
+    {{ suspect.cid }}
+    {{ suspect.is_comprised }}
+    <br />
+    <strong>source_count={{ sources|length}}</strong>
+
+    <h3>Command</h3>
+    <div style="max-height:400px;overflow:hidden;overflow-y:scroll">
+    <pre style="padding:20px;background: #c4c4c4;">{{ suspect.command_line.replace("\\n", "\n").replace(" | ", " \\\n  | ").replace(";", ";\n").replace("'+'", '') }}</pre>
+    </div>
+
+    <h3>Sigma</h3>
+
+    <table>
+        {%- for match in sigma_matches %}
+        <tr>
+            <td>{{ match.rule }}</td>
+            <td>{{ match.level }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <h3>Children</h3>
+        <table border="1">
+            <tr>
+                <th>cid</th>
+                <th>command</th>
+                <th>ioc_count</th>
+                <th>sigma_count</th>
+            </tr>
+        {%- for cmd in sub_commands -%}
+        <tr>
+            <td>
+                <a rel="ajax:modal" href="/view/cid/{{ cmd.cid }}">{{ cmd.cid }}</a>
+            </td>
+
+            <td>{{cmd.command_line}}</td>
+            <td>{{ cmd.iocs_count }}</td>
+            <td>{{ cmd.sigma_matches_count }}</td>
+        </tr>
+        {% endfor %}
+        </table>
+        {% if sources %}
+        <h3>Sources</h3>
+            {% set src_columns = sources[0].keys() %}
+            <table>
+        {%- for src in sources %}
+        <tr>
+            {%- for col in src_columns -%}
+                <td>{{ src[col] }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+        {% endif %}
+
+    {% include '_ioc.html' ignore missing %}
+
+
+
+</div>

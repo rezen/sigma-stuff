@@ -37,6 +37,7 @@ from collections import defaultdict
 import ipaddress
 import shelve
 from functools import wraps
+import base64
 
 try:
     import click
@@ -67,6 +68,22 @@ ERROR_COUNT_WHOIS = 0
 
 CONFIG_SKETCHY_DOMAINS = set()
 CONFIG_SKETCHY_IPS = set()
+
+CONFIG_MASKS = {
+    # Windows defender has key embedded into script
+    (
+        r'(OnboardingInfo \/t REG_SZ \/f \/d )([^\s]+)', r'\1xxxxx'
+    ),
+    (
+        r'net\s+localgroup\s+([^\s]+)\s+(\\?"[^"]+\"|[^\s]+)\s+(\/[a-z0-9]+)', r'net localgroup xxx xxx \3',
+    ),
+    (
+        r'\\Users\\[^\s]+\\', r'\\Users\\xxxxx\\'
+    )
+}
+CONFIG_MASKS_ID = hashlib.md5('_'.join(r[0] for r in CONFIG_MASKS).encode("utf8")).hexdigest()
+
+COMMAND_TAGGER_VERSION = None
 
 IOC_FACTS = defaultdict(dict)
 
@@ -104,6 +121,58 @@ def shelve_it(file_name):
         return new_func
 
     return decorator
+
+def get_quoted_strings(content):
+    single_quotes = re.findall(r"'([^']+)'", content)
+    dbl_quotes = re.findall(r'"([^"]+)"', content)
+    return single_quotes + dbl_quotes
+
+def find_base64_encoded_parts(content, threshold=20):
+    if len(content) < threshold:
+        return []
+
+    findings = []
+    quoted = get_quoted_strings(content)
+    parts = list(set(content.split() + quoted))
+    for part in parts:
+        if len(part) < threshold:
+            continue
+        try:
+            decoded = base64.b64decode(part).decode("utf8")
+            decoded = decoded.replace('\x00','').encode("ascii", "ignore").decode().strip()
+            if len(decoded) < threshold:
+                continue
+
+            findings.append((part, decoded, 'base64'))
+        except Exception as err:
+            pass
+    return findings
+
+
+def command_line_masked(command_line):
+    global CONFIG_MASKS
+    masked = str(command_line)
+
+    meta ={}
+    for pattern, replacement in CONFIG_MASKS:
+        masked = re.sub(pattern, replacement, masked, flags=re.IGNORECASE)
+    return masked, meta
+
+
+def command_line_tags(command_line):
+    tags = {}
+    if 'user32' in command_line and 'LockWorkStation' in command_line:
+        tags['win_lock_workstation'] = True
+
+    if '.s3.' in command_line and 'amazonaws.com' in command_line:
+        tags['aws_s3'] = True
+
+    if ' reg ' in command_line:
+        tags['registry_tweaks'] = []
+        for entry in re.finditer(r'reg\s+(?P<action>[a-z]+)\s+(?P<resource>\\?"[^"]+\"|[^\s]+)', command_line):
+            tags['registry_tweaks'].append(entry.groupdict())
+    return tags
+
 
 
 def cached(func):
@@ -268,21 +337,56 @@ def iocs_to_list(iocs, include={}):
     return records
 
 
-def command_to_ioc_data(command: str):
+def command_line_meta(command: str):
+    global CONFIG_MASKS_ID, COMMAND_TAGGER_VERSION
+
+    if COMMAND_TAGGER_VERSION is None:
+        import inspect
+        src_code = str(inspect.getsource(command_line_tags))
+        COMMAND_TAGGER_VERSION = hashlib.md5(src_code.encode("utf8")).hexdigest()
+
+    return {
+        'tagger_id': COMMAND_TAGGER_VERSION,
+        'mask_id': CONFIG_MASKS_ID,
+        'concat_ratio':  round(command.count("+") / len(command), 3),
+    }
+
+def command_to_ioc_data(command: str, parent_cid=None):
     # Cleanup invalid json bits in command
     cid = "" + hashlib.md5(command.encode("utf8")).hexdigest()
     iocs = get_msticpy_iocs(command)
+    masked_command, mask_meta = command_line_masked(command)
+
+    children = []
+    child_iocs = []
+
+    command_meta = command_line_meta(command)
+    command_meta['children_count'] = 0
+    parts = find_base64_encoded_parts(command)
+    for _, decoded, _ in parts:
+        if not decoded:
+            continue
+        subs, sub_iocs = command_to_ioc_data(decoded, cid)
+        children.extend(subs)
+        child_iocs.extend(sub_iocs)
+
+        command_meta['children_count'] += len(subs)
 
     record = {
         "cid": cid,
+        'parent_cid': parent_cid,
         "image": _parse_image(command),
         "command_line": command,
+        'masked': masked_command,
+        'masked_cid': hashlib.md5(masked_command.encode("utf8")).hexdigest(),
         "sigma_matches": get_sigmas_matches(command),
         "iocs_count": 0,
         "iocs_ipv4": list(iocs.get("ipv4", set())),
         "iocs_dns": list(iocs.get("dns", set())),
         "iocs_ipv4_countries": set(),
         "iocs_domains_fresh": False,
+        'meta': command_meta,
+        'tags': command_line_tags(command),
         # @todo get urls
     }
     sigma_count = len(record["sigma_matches"])
@@ -336,7 +440,7 @@ def command_to_ioc_data(command: str):
     record["iocs_ipv4_countries"] = list(record["iocs_ipv4_countries"])
     record["iocs_network_count"] = len(record["iocs_ipv4"]) + len(record["iocs_dns"])
     record["sigma_matches_count"] = len(record["sigma_matches"])
-    return record, iocs_to_list(iocs, {"cid": cid})
+    return [record] + children, iocs_to_list(iocs, {"cid": cid}) + child_iocs
 
 
 target_csv = sys.argv[1]
@@ -356,12 +460,10 @@ df_source["cid"] = df_source["CommandLine"].apply(
 
 
 ioc_records = []
-suspicious_records = []
 
 # Dedupe commands before processing them all
 commands_list = list(set(df_source["CommandLine"].tolist()))
 
-fh_suspicious = open("data/ioc_suspicious_commands.json", "w+")
 
 fh_iocs = open("data/iocs.csv", "w+")
 iocs_writer = csv.DictWriter(fh_iocs, ['cid', 'ioc_type', 'ioc_value'])
@@ -372,34 +474,32 @@ fh_sigma_matches = open("data/sigma_matches.csv", "w+")
 fh_sigma_matches.write("cid,rule,level\n")
 
 with click.progressbar(commands_list) as entries:
-    with open("data/ioc_all_records.json", "w+") as fh:
+    with open("data/commands_parsed.json", "w+") as fh:
         for command in entries:
             if not command:
                 continue
 
             # @todo denote longer to process records
-            record, iocs = command_to_ioc_data(command)
-            cid = record["cid"]
-
-            # Dump robust records
-            fh.write(json_dumps(record) + "\n")
-
+            records, iocs = command_to_ioc_data(command)
             # Dump ioc records
+
             for ioc in iocs:
                 iocs_writer.writerow(ioc)
 
-            # Dump sigma records
-            for sigma_match in record["sigma_matches"]:
-                rule, level = sigma_match.split(":")
-                fh_sigma_matches.write(",".join([cid, rule, level]) + "\n")
+            for record in records:
+                cid = record["cid"]
 
-            if record["iocs_domains_fresh"]:
-                fh_suspicious.write(json_dumps(record) + "\n")
-            elif record["sigma_matches_count"] > 0:
-                fh_suspicious.write(json_dumps(record) + "\n")
+                # Dump robust records
+                fh.write(json_dumps(record) + "\n")
+
+
+                # Dump sigma records
+                for sigma_match in record["sigma_matches"]:
+                    rule, level = sigma_match.split(":")
+                    fh_sigma_matches.write(",".join([cid, rule, level]) + "\n")
+
 
     fh_iocs.close()
-    fh_suspicious.close()
     fh_sigma_matches.close()
 
 

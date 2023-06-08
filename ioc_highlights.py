@@ -10,11 +10,13 @@ import os.path
 
 try:
     import pandas as pd
-    from sqlalchemy import create_engine, inspect
+    from sqlalchemy import create_engine, inspect, Table, Column, Integer, String, MetaData, Boolean, UniqueConstraint, insert
     from sqlalchemy.types import JSON
 
 except Exception as err:
+    print(err)
     print("pip3 install msticpy pandas whois redis requests click")
+    exit(1)
 
 
 def row2dict(row):
@@ -47,12 +49,29 @@ def _parse_cmd(x):
 
 engine = create_engine("sqlite:///data/dataset.db")
 conn = engine.connect()
+session = conn
 command_column = os.environ.get("COMMAND_COL", "COMMAND_LINE")
 target_csv = sys.argv[1]
 
 if not os.path.exists(target_csv):
     print(f"!! You have to provided a target csv to consume - file={target_csv}")
     exit(1)
+
+
+
+meta = MetaData()
+status_table = Table(
+    'command_status', meta,
+    Column('cid', String, index=True, unique=True),
+    Column('is_comprimised', Boolean, nullable=True),
+    Column('is_false_positive', Boolean),
+    Column('status', String),
+)
+
+try:
+    meta.create_all(engine)
+except:
+    pass
 
 
 if 'DB_BUILD' in os.environ:
@@ -65,19 +84,33 @@ if 'DB_BUILD' in os.environ:
         dtype={}
     )
 
-    fh = open("data/ioc_suspicious_commands.json", 'r')
+    fh = open("data/commands_parsed.json", 'r')
     first_line = fh.readline()
     fh.close()
     record = json.loads(first_line)
     json_columns = df_json_columns(record)
 
-    pd.read_json('data/ioc_suspicious_commands.json', lines=True).to_sql('suspicious_commands', conn,
+    df_status = pd.DataFrame([])
+    df_suspicious = pd.read_json('data/commands_parsed.json', lines=True)
+    cids = df_suspicious['cid'].tolist()
+
+    for cid in cids:
+        try:
+            stmt = insert(status_table).values(cid=cid)
+            engine.execute(stmt)
+        except:
+            pass
+
+    df_suspicious['is_comprimised'] = None
+    df_suspicious.to_sql('commands_parsed', conn,
         if_exists="replace",
         dtype={
             # Needs help complex datatypes ... objects/lists
             c: JSON for c in json_columns
         }
     )
+
+
     pd.read_csv('data/iocs.csv').to_sql('iocs', conn,
         if_exists="replace",
         dtype={}
@@ -101,15 +134,21 @@ for schema in schemas:
             print("Column: %s" % column)
 """
 
-
-
 try:
 
     query = '''
-    CREATE INDEX idx_suspicious_cid
-    ON suspicious_commands (cid);
+    CREATE INDEX idx_command_status_cid
+    ON command_status (cid);
     '''.strip()
     conn.execute(query)
+
+
+    query = '''
+    CREATE INDEX idx_commands_parsed_cid
+    ON commands_parsed (cid);
+    '''.strip()
+    conn.execute(query)
+
 
     query = '''
     CREATE INDEX idx_iocs_facts_ioc
@@ -171,9 +210,28 @@ ORDER BY
     count(m.cid) DESC
 '''.strip()
 
+#
+query = '''
+SELECT m.level, m.rule, source.ORGANIZATION_ID, m.cid, source.COMMAND_LINE
+FROM sigma_matches m
+JOIN
+    source on source.cid = m.cid
+WHERE m.level in ('medium', 'high')
+
+'''.strip()
+
+fh = open("data/sigmas_high.csv", "w+")
+writer = csv.DictWriter(fh, [
+    'level', 'rule',
+    'organization_id'.upper(), 'cid',
+    'command_line'.upper(), 'details'.upper()
+])
+writer.writeheader()
 
 
 results = conn.execute(query)
 for row in results:
     record = dict(row._mapping)
-    print(record)
+    writer.writerow(record)
+
+fh.close()

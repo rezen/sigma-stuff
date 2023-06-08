@@ -1,0 +1,24 @@
+<h3>IOCs <small>{{ iocs|length}}</small></h3>
+<table border="1">
+    {%- for data in iocs %}
+    {%- set ioc = data.Ioc if data.Ioc  else data -%}
+    {%- set command = data.SuspiciousCommand.command_line if data.SuspiciousCommand  else '-' -%}
+
+    <tr>
+        <td>
+            {% if request.endpoint == 'view_get_dns' %}
+                <a rel="ajax:modal" href="/view/cid/{{ ioc.cid }}">{{ ioc.cid }}</a>
+            {% elif ioc.ioc_type == 'dns' %}
+                <a rel="ajax:modal" href="/view/{{ ioc.ioc_type }}/{{ ioc.ioc_value }}#{{ ioc.cid }}">o</a>
+            {% elif ioc.ioc_type == 'ipv4' %}
+                <a rel="ajax:modal" href="/view/ip/{{ ioc.ioc_value }}#{{ ioc.cid }}">o</a>
+            {% endif %}
+        </td>
+        <td>{{ ioc.ioc_type }}</td>
+        <td>{{ ioc.ioc_value }}</td>
+        <td>
+            <pre>{{command }}</pre>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
